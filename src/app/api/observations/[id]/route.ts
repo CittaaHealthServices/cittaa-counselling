@@ -7,7 +7,7 @@ import CounselingRequest from '@/models/CounselingRequest'
 import Notification from '@/models/Notification'
 import User from '@/models/User'
 import { generateRequestNumber } from '@/lib/utils'
-import { sendObservationEscalatedEmail, sendNewRequestEmail } from '@/lib/email-observations'
+import { sendObservationEscalatedEmail } from '@/lib/email-observations'
 
 // ─── GET /api/observations/[id] ───────────────────────────────────────────────
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
