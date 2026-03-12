@@ -1,0 +1,47 @@
+{
+  "name": "cittaa-counseling",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "seed": "ts-node --compiler-options '{\"module\":\"CommonJS\"}' prisma/seed.ts"
+  },
+  "dependencies": {
+    "next": "14.2.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "next-auth": "^4.24.7",
+    "mongoose": "^8.4.1",
+    "bcryptjs": "^2.4.3",
+    "resend": "^3.3.0",
+    "react-hook-form": "^7.52.1",
+    "zod": "^3.23.8",
+    "@hookform/resolvers": "^3.6.0",
+    "date-fns": "^3.6.0",
+    "recharts": "^2.12.7",
+    "lucide-react": "^0.400.0",
+    "clsx": "^2.1.1",
+    "tailwind-merge": "^2.3.0",
+    "react-hot-toast": "^2.4.1",
+    "@google-cloud/storage": "^7.11.2",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.9",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/multer": "^1.4.11",
+    "@types/uuid": "^10.0.0",
+    "typescript": "^5.5.3",
+    "tailwindcss": "^3.4.4",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "14.2.5"
+  }
+}
