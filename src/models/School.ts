@@ -11,6 +11,8 @@ export interface ISchoolDoc extends Document {
   phone: string
   email: string
   principalName?: string
+  principalEmail?: string
+  principalPhone?: string
   totalStudents?: number
   isActive: boolean
   createdAt: Date
@@ -28,6 +30,8 @@ const SchoolSchema = new Schema<ISchoolDoc>(
     phone:           { type: String, required: true },
     email:           { type: String, required: true, unique: true, lowercase: true },
     principalName:   { type: String },
+    principalEmail:  { type: String, lowercase: true },
+    principalPhone:  { type: String },
     totalStudents:   { type: Number },
     isActive:        { type: Boolean, default: true },
   },

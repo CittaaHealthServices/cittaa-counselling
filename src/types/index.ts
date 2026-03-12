@@ -94,12 +94,17 @@ export interface IUser {
 export interface ISchool {
   _id: string
   name: string
+  code?: string
   address: string
   city: string
   state: string
   pincode: string
   phone: string
   email: string
+  principalName?: string
+  principalEmail?: string
+  principalPhone?: string
+  totalStudents?: number
   isActive: boolean
 }
 
