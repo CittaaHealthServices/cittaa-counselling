@@ -72,7 +72,7 @@ export async function GET(req: NextRequest) {
           lastActivity: { $max: '$createdAt' },
         }},
         { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'psychologist' } },
-        { $unwind: { path: '$psychologist', preserveNullAndEmpty: true } },
+        { $unwind: { path: '$psychologist', preserveNullAndEmptyArrays: true } },
         { $project: {
           psychologistName: '$psychologist.name',
           psychologistEmail: '$psychologist.email',

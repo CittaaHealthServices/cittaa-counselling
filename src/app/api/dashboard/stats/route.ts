@@ -135,7 +135,7 @@ export async function GET(req: NextRequest) {
       ? Observation.aggregate([
           { $group: { _id: '$schoolId', count: { $sum: 1 }, escalated: { $sum: { $cond: [{ $eq: ['$status', 'ESCALATED'] }, 1, 0] } }, pending: { $sum: { $cond: [{ $eq: ['$status', 'SHARED'] }, 1, 0] } } } },
           { $lookup: { from: 'schools', localField: '_id', foreignField: '_id', as: 'school' } },
-          { $unwind: { path: '$school', preserveNullAndEmpty: true } },
+          { $unwind: { path: '$school', preserveNullAndEmptyArrays: true } },
           { $project: { schoolName: '$school.name', schoolCode: '$school.code', count: 1, escalated: 1, pending: 1 } },
           { $sort: { count: -1 } },
           { $limit: 15 },
@@ -146,7 +146,7 @@ export async function GET(req: NextRequest) {
       ? Observation.aggregate([
           { $match: { ...obsFilter, createdAt: { $gte: startOfMonthUTC } } },
           { $lookup: { from: 'students', localField: 'studentId', foreignField: '_id', as: 'student' } },
-          { $unwind: { path: '$student', preserveNullAndEmpty: true } },
+          { $unwind: { path: '$student', preserveNullAndEmptyArrays: true } },
           { $group: {
             _id: { class: '$student.class', section: '$student.section' },
             count:     { $sum: 1 },
