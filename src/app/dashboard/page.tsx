@@ -253,8 +253,8 @@ export default function DashboardPage() {
                   href={`/dashboard/requests?status=${status}`}
                   className="flex items-center justify-between hover:bg-slate-50 rounded-lg px-2 py-1.5 -mx-2 transition-colors"
                 >
-                  <span className={cn('badge', STATUS_COLORS[status as keyof typeof STATUS_COLORS] || 'bg-gray-100 text-gray-600')}>
-                    {STATUS_LABELS[status as keyof typeof STATUS_LABELS] || status}
+                  <span className={cn('badge', STATUS_COLORS[status] || 'bg-gray-100 text-gray-600')}>
+                    {STATUS_LABELS[status] || status}
                   </span>
                   <span className="text-sm font-semibold text-slate-700">{stats.requestsByStatus[status]}</span>
                 </Link>

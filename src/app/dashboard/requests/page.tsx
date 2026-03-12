@@ -75,7 +75,7 @@ export default function RequestsPage() {
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               )}
             >
-              {s === 'ALL' ? 'All' : STATUS_LABELS[s as keyof typeof STATUS_LABELS] || s}
+              {s === 'ALL' ? 'All' : STATUS_LABELS[s] || s}
             </button>
           ))}
         </div>

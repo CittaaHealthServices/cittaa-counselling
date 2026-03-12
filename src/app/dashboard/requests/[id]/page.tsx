@@ -295,7 +295,7 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
                     </div>
                     <div className="pb-3">
                       <div className="text-sm font-medium text-slate-900">
-                        {STATUS_LABELS[h.status as keyof typeof STATUS_LABELS] || h.status}
+                        {STATUS_LABELS[h.status] || h.status}
                       </div>
                       {h.note && <div className="text-xs text-slate-500 mt-0.5">{h.note}</div>}
                       <div className="text-xs text-slate-400 mt-0.5">

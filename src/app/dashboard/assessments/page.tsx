@@ -155,7 +155,7 @@ export default function AssessmentsPage() {
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               )}
             >
-              {s === 'ALL' ? 'All' : STATUS_LABELS[s as keyof typeof STATUS_LABELS] || s}
+              {s === 'ALL' ? 'All' : STATUS_LABELS[s] || s}
             </button>
           ))}
         </div>
@@ -222,11 +222,11 @@ export default function AssessmentsPage() {
                         <span
                           className={cn(
                             'badge',
-                            STATUS_COLORS[assessment.status as keyof typeof STATUS_COLORS] ||
+                            STATUS_COLORS[assessment.status] ||
                               'bg-gray-100 text-gray-600'
                           )}
                         >
-                          {STATUS_LABELS[assessment.status as keyof typeof STATUS_LABELS] ||
+                          {STATUS_LABELS[assessment.status] ||
                             assessment.status}
                         </span>
                       </td>

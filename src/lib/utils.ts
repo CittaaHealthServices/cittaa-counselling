@@ -14,7 +14,7 @@ export function generateRequestNumber(): string {
 }
 
 // ─── Status display helpers ───────────────────────────────────────────────────
-export const STATUS_LABELS: Record<RequestStatus, string> = {
+export const STATUS_LABELS: Record<string, string> = {
   PENDING_APPROVAL:      'Pending Approval',
   APPROVED:              'Approved',
   REJECTED:              'Rejected',
@@ -30,7 +30,7 @@ export const STATUS_LABELS: Record<RequestStatus, string> = {
   CLOSED:                'Closed',
 }
 
-export const STATUS_COLORS: Record<RequestStatus, string> = {
+export const STATUS_COLORS: Record<string, string> = {
   PENDING_APPROVAL:      'bg-yellow-100 text-yellow-800',
   APPROVED:              'bg-blue-100 text-blue-800',
   REJECTED:              'bg-red-100 text-red-800',
@@ -46,14 +46,14 @@ export const STATUS_COLORS: Record<RequestStatus, string> = {
   CLOSED:                'bg-gray-100 text-gray-700',
 }
 
-export const PRIORITY_COLORS: Record<Priority, string> = {
+export const PRIORITY_COLORS: Record<string, string> = {
   LOW:    'bg-gray-100 text-gray-600',
   MEDIUM: 'bg-blue-100 text-blue-700',
   HIGH:   'bg-orange-100 text-orange-700',
   URGENT: 'bg-red-100 text-red-700',
 }
 
-export const PRIORITY_DOT: Record<Priority, string> = {
+export const PRIORITY_DOT: Record<string, string> = {
   LOW:    'bg-gray-400',
   MEDIUM: 'bg-blue-500',
   HIGH:   'bg-orange-500',
