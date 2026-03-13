@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -11,7 +11,7 @@ const STATUSES = ['ALL', 'PENDING_APPROVAL', 'APPROVED', 'PSYCHOLOGIST_ASSIGNED'
   'SESSION_COMPLETED', 'ASSESSMENT_REQUESTED', 'ASSESSMENT_APPROVED', 'RCI_NOTIFIED',
   'RCI_VISITING', 'RCI_REPORT_SUBMITTED', 'CLOSED', 'REJECTED']
 
-export default function RequestsPage() {
+function RequestsContent() {
   const { data: session } = useSession()
   const searchParams = useSearchParams()
 
@@ -206,5 +206,13 @@ export default function RequestsPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function RequestsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-96"><div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" /></div>}>
+      <RequestsContent />
+    </Suspense>
   )
 }

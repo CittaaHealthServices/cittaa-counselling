@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import { Search, Filter, ChevronLeft, ChevronRight, CheckCircle, Clock } from 'lucide-react'
@@ -9,7 +9,7 @@ import type { IAssessment } from '@/types'
 
 const RCI_STATUSES = ['ALL', 'NOTIFIED', 'VISIT_SCHEDULED', 'VISITING', 'REPORT_SUBMITTED']
 
-export default function RCIPage() {
+function RCIContent() {
   const { data: session } = useSession()
   const searchParams = useSearchParams()
 
@@ -369,5 +369,13 @@ export default function RCIPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function RCIPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-96"><div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" /></div>}>
+      <RCIContent />
+    </Suspense>
   )
 }

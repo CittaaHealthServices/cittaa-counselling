@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import { Plus, Search, Filter, ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react'
@@ -9,7 +9,7 @@ import type { IAssessment } from '@/types'
 
 const STATUSES = ['ALL', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'IN_PROGRESS', 'COMPLETED']
 
-export default function AssessmentsPage() {
+function AssessmentsContent() {
   const { data: session } = useSession()
   const searchParams = useSearchParams()
 
@@ -363,5 +363,13 @@ export default function AssessmentsPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function AssessmentsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-96"><div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" /></div>}>
+      <AssessmentsContent />
+    </Suspense>
   )
 }

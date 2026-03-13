@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -9,7 +9,7 @@ import type { ISession } from '@/types'
 
 const SESSION_STATUSES = ['ALL', 'SCHEDULED', 'COMPLETED', 'CANCELLED']
 
-export default function SessionsPage() {
+function SessionsContent() {
   const { data: session } = useSession()
   const searchParams = useSearchParams()
 
@@ -224,5 +224,13 @@ export default function SessionsPage() {
         </div>
       )}
     </div>
+  )
+}
+
+export default function SessionsPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center h-96"><div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" /></div>}>
+      <SessionsContent />
+    </Suspense>
   )
 }
