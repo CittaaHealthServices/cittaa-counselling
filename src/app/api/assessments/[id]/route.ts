@@ -9,6 +9,46 @@ import User from '@/models/User'
 import Notification from '@/models/Notification'
 import { sendRCINotificationEmail } from '@/lib/email'
 
+// GET /api/assessments/:id — fetch full assessment details
+export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  await connectDB()
+
+  const assessment = await Assessment.findById(params.id)
+    .populate({
+      path: 'requestId',
+      populate: [
+        { path: 'studentId', select: 'name class section age gender parentName parentPhone' },
+        { path: 'schoolId',  select: 'name address city state phone email' },
+        { path: 'submittedById', select: 'name email role' },
+      ],
+    })
+    .populate('requestedById', 'name email role')
+    .populate('approvedById',  'name email role')
+    .lean()
+
+  if (!assessment) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // School-scoped roles can only see assessments for their school
+  const schoolRoles = ['CLASS_TEACHER', 'COORDINATOR', 'SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN']
+  if (schoolRoles.includes(session.user.role)) {
+    const school = (assessment.requestId as any)?.schoolId as any
+    const schoolId = school?._id?.toString() || school?.toString()
+    if (schoolId !== session.user.schoolId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
+  // Fetch linked RCI report if any
+  const rciReport = await RCIReport.findOne({ assessmentId: params.id })
+    .populate('assignedToId', 'name email phone')
+    .lean()
+
+  return NextResponse.json({ assessment, rciReport })
+}
+
 // Approve or reject assessment, and if approved — assign RCI
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)

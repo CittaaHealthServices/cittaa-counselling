@@ -5,6 +5,32 @@ import connectDB from '@/lib/db'
 import User from '@/models/User'
 import bcrypt from 'bcryptjs'
 
+// GET /api/users/:id — fetch user profile
+export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  await connectDB()
+
+  const user = await User.findById(params.id)
+    .populate('schoolId', 'name city state code')
+    .select('-passwordHash')
+    .lean()
+
+  if (!user) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // School-scoped roles can only view users from their school
+  const schoolRoles = ['CLASS_TEACHER', 'COORDINATOR', 'SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN']
+  if (schoolRoles.includes(session.user.role)) {
+    const userSchool = (user.schoolId as any)?._id?.toString() || (user.schoolId as any)?.toString()
+    if (userSchool !== session.user.schoolId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
+  return NextResponse.json({ user })
+}
+
 // PATCH — update user (availability, active, profile)
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)

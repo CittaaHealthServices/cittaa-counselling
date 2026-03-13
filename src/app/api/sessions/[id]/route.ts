@@ -6,6 +6,41 @@ import Session from '@/models/Session'
 import CounselingRequest from '@/models/CounselingRequest'
 import Notification from '@/models/Notification'
 
+// GET /api/sessions/:id — fetch full session details
+export async function GET(_req: NextRequest, { params }: { params: { id: string } }) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  await connectDB()
+
+  const doc = await Session.findById(params.id)
+    .populate('psychologistId', 'name email phone')
+    .populate('substituteId', 'name email')
+    .populate({
+      path: 'requestId',
+      populate: [
+        { path: 'studentId', select: 'name class section age gender parentName parentPhone' },
+        { path: 'schoolId',  select: 'name address city state phone email' },
+        { path: 'submittedById', select: 'name email role' },
+      ],
+    })
+    .lean()
+
+  if (!doc) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+
+  // Role-based access: school users can only see sessions for their school
+  const userRole = session.user.role
+  if (['CLASS_TEACHER', 'COORDINATOR', 'SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN'].includes(userRole)) {
+    const school = (doc.requestId as any)?.schoolId as any
+    const schoolId = school?._id?.toString() || school?.toString()
+    if (schoolId !== session.user.schoolId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
+  return NextResponse.json({ session: doc })
+}
+
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
