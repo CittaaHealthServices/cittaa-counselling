@@ -15,14 +15,14 @@ function baseTemplate(content: string, title: string): string {
   <style>
     body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background:#f1f5f9; margin:0; padding:20px; }
     .container { max-width:560px; margin:0 auto; background:#ffffff; border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
-    .header { background:#2563EB; padding:24px 32px; }
+    .header { background:#7c3aed; padding:24px 32px; }
     .header-logo { color:#ffffff; font-size:20px; font-weight:700; letter-spacing:-0.3px; }
-    .header-sub  { color:#bfdbfe; font-size:13px; margin-top:4px; }
+    .header-sub  { color:#ddd6fe; font-size:13px; margin-top:4px; }
     .body   { padding:28px 32px; }
     .title  { font-size:18px; font-weight:600; color:#0f172a; margin:0 0 12px; }
     .text   { font-size:14px; color:#475569; line-height:1.7; margin:0 0 16px; }
     .badge  { display:inline-block; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600; margin-bottom:16px; }
-    .badge-blue   { background:#dbeafe; color:#1d4ed8; }
+    .badge-blue   { background:#ede9fe; color:#6d28d9; }
     .badge-orange { background:#ffedd5; color:#c2410c; }
     .badge-red    { background:#fee2e2; color:#b91c1c; }
     .badge-green  { background:#dcfce7; color:#15803d; }
@@ -30,7 +30,7 @@ function baseTemplate(content: string, title: string): string {
     .info-row { display:flex; justify-content:space-between; margin-bottom:8px; }
     .info-label { font-size:12px; color:#94a3b8; font-weight:500; }
     .info-value { font-size:13px; color:#1e293b; font-weight:600; text-align:right; }
-    .btn { display:inline-block; background:#2563EB; color:#ffffff; padding:12px 24px; border-radius:8px; text-decoration:none; font-size:14px; font-weight:600; margin-top:8px; }
+    .btn { display:inline-block; background:#7c3aed; color:#ffffff; padding:12px 24px; border-radius:8px; text-decoration:none; font-size:14px; font-weight:600; margin-top:8px; }
     .footer { background:#f8fafc; padding:16px 32px; text-align:center; }
     .footer-text { font-size:11px; color:#94a3b8; }
   </style>
@@ -265,7 +265,7 @@ export async function sendWelcomeEmail(opts: {
   const ctaBlock = opts.setPasswordUrl
     ? `<p class="text">Click the button below to set your own password and activate your account. This link is valid for <strong>72 hours</strong>.</p>
        <a href="${opts.setPasswordUrl}" class="btn" style="background:#16a34a;">Set My Password →</a>
-       <p class="text" style="margin-top:16px;font-size:12px;color:#94a3b8;">Or use the temporary password above to log in at <a href="${APP_URL}/login" style="color:#60a5fa;">${APP_URL}/login</a> and change it from your profile.</p>`
+       <p class="text" style="margin-top:16px;font-size:12px;color:#94a3b8;">Or use the temporary password above to log in at <a href="${APP_URL}/login" style="color:#a78bfa;">${APP_URL}/login</a> and change it from your profile.</p>`
     : `<p class="text">Please log in and change your password immediately from your profile settings.</p>
        <a href="${APP_URL}/login" class="btn">Log In Now →</a>`
 
@@ -296,7 +296,7 @@ export async function sendPasswordResetEmail(opts: {
     <a href="${opts.resetUrl}" class="btn">Reset My Password →</a>
     <p class="text" style="margin-top:20px;font-size:12px;color:#94a3b8;">
       If you did not request a password reset, please ignore this email. Your password will remain unchanged.
-      <br/>If you're concerned, contact us at <a href="mailto:support@cittaa.in" style="color:#60a5fa;">support@cittaa.in</a>.
+      <br/>If you're concerned, contact us at <a href="mailto:support@cittaa.in" style="color:#a78bfa;">support@cittaa.in</a>.
     </p>
   `
   return send(opts.to, 'Reset Your Cittaa Mind Bridge Password',

@@ -7,7 +7,12 @@ import Session from '@/models/Session'
 import Assessment from '@/models/Assessment'
 import RCIReport from '@/models/RCIReport'
 import Observation from '@/models/Observation'
+import School from '@/models/School'
 import mongoose from 'mongoose'
+
+// Never cache this route — stats must always reflect live DB data
+export const dynamic    = 'force-dynamic'
+export const revalidate = 0
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -52,6 +57,7 @@ export async function GET(req: NextRequest) {
     rciPending,
     closedThisMonth,
     urgentCases,
+    activeSchoolsCount,
     statusAgg,
     priorityAgg,
     monthlyTrend,
@@ -81,6 +87,11 @@ export async function GET(req: NextRequest) {
       updatedAt: { $gte: new Date(todayIST.getFullYear(), todayIST.getMonth(), 1) },
     }),
     CounselingRequest.countDocuments({ ...baseFilter, priority: 'URGENT', status: { $ne: 'CLOSED' } }),
+
+    // Total active schools (real count, not limited by the coverage aggregate)
+    isCittaaAdmin
+      ? School.countDocuments({ isActive: true })
+      : Promise.resolve(0),
 
     // Status breakdown
     CounselingRequest.aggregate([
@@ -181,6 +192,7 @@ export async function GET(req: NextRequest) {
     rciPending,
     closedThisMonth,
     urgentCases,
+    activeSchoolsCount,
     requestsByStatus,
     requestsByPriority,
     monthlyTrend: monthlyTrendFormatted,

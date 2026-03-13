@@ -38,7 +38,7 @@ export default function LoginPage() {
     <div className="min-h-screen flex" style={{ background: '#0f172a' }}>
       {/* Left panel — branding */}
       <div className="hidden lg:flex flex-col justify-between w-1/2 p-12"
-           style={{ background: 'linear-gradient(135deg, #1e3a8a 0%, #2563EB 60%, #7C3AED 100%)' }}>
+           style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 60%, #7C3AED 100%)' }}>
         <div>
           <div className="flex items-center gap-3 mb-12">
             <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
@@ -51,7 +51,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-4xl font-bold text-white leading-tight mb-4">
             School Counselling<br/>
-            <span style={{ color: '#93c5fd' }}>Made Structured.</span>
+            <span style={{ color: '#c4b5fd' }}>Made Structured.</span>
           </h1>
           <p className="text-purple-100 text-lg leading-relaxed">
             A secure, end-to-end platform for schools and Cittaa psychologists

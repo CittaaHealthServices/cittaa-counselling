@@ -5,7 +5,7 @@ import Link from 'next/link'
 import {
   FileText, Calendar, ClipboardList, AlertTriangle, CheckCircle2,
   TrendingUp, School, Clock, ArrowRight, Users, Eye,
-  BarChart2, AlertCircle,
+  BarChart2, AlertCircle, RefreshCw,
 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 import { cn, PRIORITY_COLORS, STATUS_LABELS, STATUS_COLORS, ROLE_LABELS } from '@/lib/utils'
@@ -21,14 +21,30 @@ const STATUS_ORDER = [
 
 export default function DashboardPage() {
   const { data: session } = useSession()
-  const [stats, setStats]   = useState<any>(null)
+  const [stats, setStats]     = useState<any>(null)
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+
+  const loadStats = async (silent = false) => {
+    if (!silent) setLoading(true)
+    else setRefreshing(true)
+    try {
+      const res = await fetch('/api/dashboard/stats', { cache: 'no-store' })
+      const data = await res.json()
+      setStats(data)
+      setLastUpdated(new Date())
+    } finally {
+      setLoading(false)
+      setRefreshing(false)
+    }
+  }
 
   useEffect(() => {
-    fetch('/api/dashboard/stats')
-      .then((r) => r.json())
-      .then(setStats)
-      .finally(() => setLoading(false))
+    loadStats()
+    // Auto-refresh every 60 seconds
+    const interval = setInterval(() => loadStats(true), 60_000)
+    return () => clearInterval(interval)
   }, [])
 
   const role = session?.user?.role || ''
@@ -64,13 +80,28 @@ export default function DashboardPage() {
             {role === 'PSYCHOLOGIST'    && 'Psychologist — your active cases'}
             {role === 'RCI_TEAM'        && 'RCI Team — your assigned visits'}
           </p>
+          {lastUpdated && (
+            <p className="text-slate-400 text-xs mt-1">
+              Updated {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+            </p>
+          )}
         </div>
-        {['CLASS_TEACHER', 'COORDINATOR', 'SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN'].includes(role) && (
-          <Link href="/dashboard/requests/new" className="btn-primary">
-            <FileText size={16} />
-            New Request
-          </Link>
-        )}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => loadStats(true)}
+            disabled={refreshing}
+            title="Refresh stats"
+            className="p-2 rounded-lg text-slate-400 hover:text-purple-600 hover:bg-purple-50 transition-colors disabled:opacity-40"
+          >
+            <RefreshCw size={16} className={refreshing ? 'animate-spin' : ''} />
+          </button>
+          {['CLASS_TEACHER', 'COORDINATOR', 'SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN'].includes(role) && (
+            <Link href="/dashboard/requests/new" className="btn-primary">
+              <FileText size={16} />
+              New Request
+            </Link>
+          )}
+        </div>
       </div>
 
       {/* ── Counselling Request Stats ─────────────────────────────────────── */}
@@ -83,7 +114,7 @@ export default function DashboardPage() {
         <StatCard label="Urgent Cases"          value={stats?.urgentCases ?? 0}     icon={AlertTriangle} color={stats?.urgentCases ? 'red' : 'gray'} href="/dashboard/requests?priority=URGENT" />
         <StatCard label="Closed This Month"     value={stats?.closedThisMonth ?? 0} icon={CheckCircle2}  color="green"  href="/dashboard/requests?status=CLOSED" />
         {isCittaaAdmin && (
-          <StatCard label="Active Schools" value={stats?.schoolCoverage?.length ?? 0} icon={School} color="teal" href="/dashboard/schools" />
+          <StatCard label="Active Schools" value={stats?.activeSchoolsCount ?? 0} icon={School} color="teal" href="/dashboard/schools" />
         )}
       </div>
 
@@ -236,7 +267,7 @@ export default function DashboardPage() {
                   contentStyle={{ background: '#1e293b', border: 'none', borderRadius: 8, color: '#f8fafc', fontSize: 12 }}
                   cursor={{ fill: '#f1f5f9' }}
                 />
-                <Bar dataKey="count" name="Requests" fill="#2563EB" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="count" name="Requests" fill="#7c3aed" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
