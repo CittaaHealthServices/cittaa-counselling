@@ -18,11 +18,16 @@ export async function GET(req: NextRequest) {
   const filter: any = { isActive: true }
 
   // All school-level users see only their school's students
-  if (['SCHOOL_PRINCIPAL', 'COORDINATOR', 'CLASS_TEACHER'].includes(role)) {
+  if (['SCHOOL_PRINCIPAL', 'COORDINATOR', 'CLASS_TEACHER', 'SCHOOL_ADMIN'].includes(role)) {
     filter.schoolId = new mongoose.Types.ObjectId(schoolId!)
-  } else if (role === 'CITTAA_ADMIN') {
+  } else if (['CITTAA_ADMIN', 'CITTAA_SUPPORT'].includes(role)) {
     const filterSchool = searchParams.get('schoolId')
     if (filterSchool) filter.schoolId = new mongoose.Types.ObjectId(filterSchool)
+  } else if (['PSYCHOLOGIST', 'RCI_TEAM'].includes(role)) {
+    // Psychologists must pass a schoolId to search students across schools
+    const filterSchool = searchParams.get('schoolId')
+    if (!filterSchool) return NextResponse.json({ students: [] })
+    filter.schoolId = new mongoose.Types.ObjectId(filterSchool)
   } else {
     return NextResponse.json({ students: [] })
   }

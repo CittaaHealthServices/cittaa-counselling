@@ -2,14 +2,21 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+/* Inter and Kaushan Script are loaded via next/font — no @import needed */
 
 * { box-sizing: border-box; }
 
 body {
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   background: #f1f5f9;
   color: #0f172a;
+}
+
+/* Cittaa brand name — always Kaushan Script */
+.cittaa-brand {
+  font-family: var(--font-kaushan), 'Kaushan Script', cursive;
+  font-weight: 400;
+  letter-spacing: 0.3px;
 }
 
 /* Scrollbar */

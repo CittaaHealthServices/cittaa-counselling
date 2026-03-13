@@ -1,5 +1,6 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
@@ -44,7 +45,7 @@ export default function LoginPage() {
               <Brain size={22} className="text-white" />
             </div>
             <div>
-              <div className="text-white font-bold text-lg leading-none">Cittaa</div>
+              <div className="cittaa-brand text-white text-xl leading-none">Cittaa</div>
               <div className="text-blue-200 text-xs">Mind Bridge</div>
             </div>
           </div>
@@ -84,7 +85,7 @@ export default function LoginPage() {
               <Brain size={20} className="text-white" />
             </div>
             <div>
-              <div className="text-white font-bold">Cittaa Mind Bridge</div>
+              <div className="text-white"><span className="cittaa-brand text-lg">Cittaa</span> <span className="font-semibold text-sm">Mind Bridge</span></div>
               <div className="text-slate-400 text-xs">School Counselling Platform</div>
             </div>
           </div>
@@ -111,9 +112,15 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                  Password
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-sm font-medium text-slate-300">
+                    Password
+                  </label>
+                  <Link href="/forgot-password"
+                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                    Forgot password?
+                  </Link>
+                </div>
                 <div className="relative">
                   <input
                     type={showPwd ? 'text' : 'password'}

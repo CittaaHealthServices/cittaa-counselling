@@ -69,6 +69,8 @@ export default function ObservationsPage() {
   const [actionLoading, setActLoading]      = useState(false)
 
   // ── New observation form state ────────────────────────────────────────────
+  const [schools, setSchools]               = useState<any[]>([])
+  const [selectedSchoolId, setSelSchoolId]  = useState('')
   const [students, setStudents]             = useState<any[]>([])
   const [teachers, setTeachers]             = useState<any[]>([])
   const [studentSearch, setStSearch]        = useState('')
@@ -114,24 +116,36 @@ export default function ObservationsPage() {
       .finally(() => setStatsLoading(false))
   }, [isPrincipalView, observations]) // refresh when list changes
 
-  // ── Load students + teachers when modal opens ─────────────────────────────
+  // ── Load schools list for psychologist (to pick a school first) ───────────
+  useEffect(() => {
+    if (!showNew || !canCreate) return
+    fetch('/api/schools')
+      .then((r) => r.json())
+      .then((d) => setSchools(d.schools || []))
+  }, [showNew, canCreate])
+
+  // ── Load students when modal opens (pass schoolId for psychologists) ──────
   useEffect(() => {
     if (!showNew) return
-    const params = new URLSearchParams({ limit: '50' })
+    const params = new URLSearchParams({ limit: '200' })
+    // Psychologists must select a school first
+    if (canCreate && !selectedSchoolId) { setStudents([]); return }
+    if (canCreate && selectedSchoolId) params.set('schoolId', selectedSchoolId)
     if (filterClass)   params.set('class', filterClass)
     if (filterSection) params.set('section', filterSection)
     if (studentSearch) params.set('search', studentSearch)
-
     fetch(`/api/students?${params}`).then((r) => r.json()).then((d) => setStudents(d.students || []))
-  }, [showNew, filterClass, filterSection, studentSearch])
+  }, [showNew, selectedSchoolId, filterClass, filterSection, studentSearch, canCreate])
 
+  // ── Load teachers when modal opens (pass schoolId for psychologists) ──────
   useEffect(() => {
     if (!showNew) return
+    const schoolParam = selectedSchoolId ? `&schoolId=${selectedSchoolId}` : ''
     Promise.all([
-      fetch('/api/users?role=CLASS_TEACHER').then((r) => r.json()),
-      fetch('/api/users?role=COORDINATOR').then((r) => r.json()),
+      fetch(`/api/users?role=CLASS_TEACHER${schoolParam}`).then((r) => r.json()),
+      fetch(`/api/users?role=COORDINATOR${schoolParam}`).then((r) => r.json()),
     ]).then(([t, c]) => setTeachers([...(t.users || []), ...(c.users || [])]))
-  }, [showNew])
+  }, [showNew, selectedSchoolId])
 
   // ── Auto-fill classObserved when student selected ─────────────────────────
   useEffect(() => {
@@ -189,7 +203,7 @@ export default function ObservationsPage() {
       classObserved: '', observations: '',
       behaviourFlags: [], recommendEscalation: false, sharedWithId: '',
     })
-    setSelStudent(null); setStSearch(''); setFilterClass(''); setFilterSection(''); setUseManual(false)
+    setSelStudent(null); setStSearch(''); setFilterClass(''); setFilterSection(''); setUseManual(false); setSelSchoolId('')
   }
 
   // ── Teacher review actions ────────────────────────────────────────────────
@@ -464,6 +478,26 @@ export default function ObservationsPage() {
       {showNew && (
         <Modal title="New Classroom Observation" onClose={() => { setShowNew(false); resetForm() }}>
           <div className="space-y-4 max-h-[72vh] overflow-y-auto pr-1">
+
+            {/* School selector — shown only for psychologists (they have no fixed school) */}
+            {canCreate && schools.length > 0 && (
+              <div>
+                <label className="form-label">School <span className="text-red-500">*</span></label>
+                <select
+                  value={selectedSchoolId}
+                  onChange={(e) => { setSelSchoolId(e.target.value); setSelStudent(null); setStSearch(''); setStudents([]); setTeachers([]) }}
+                  className="form-select"
+                >
+                  <option value="">— Select school —</option>
+                  {schools.map((s: any) => (
+                    <option key={s._id} value={s._id}>{s.name}</option>
+                  ))}
+                </select>
+                {!selectedSchoolId && (
+                  <p className="text-xs text-amber-600 mt-1">Select a school first to search students and teachers</p>
+                )}
+              </div>
+            )}
 
             {/* Toggle: Select from system vs manual entry */}
             <div className="flex rounded-lg border border-slate-200 overflow-hidden text-sm">

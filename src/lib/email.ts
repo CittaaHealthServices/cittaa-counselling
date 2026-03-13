@@ -259,19 +259,46 @@ export async function sendWelcomeEmail(opts: {
   role: string
   schoolName?: string
   temporaryPassword: string
+  setPasswordUrl?: string   // if provided, user clicks this to set their own password
+}) {
+  const roleLabel = opts.role.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+  const ctaBlock = opts.setPasswordUrl
+    ? `<p class="text">Click the button below to set your own password and activate your account. This link is valid for <strong>72 hours</strong>.</p>
+       <a href="${opts.setPasswordUrl}" class="btn" style="background:#16a34a;">Set My Password →</a>
+       <p class="text" style="margin-top:16px;font-size:12px;color:#94a3b8;">Or use the temporary password above to log in at <a href="${APP_URL}/login" style="color:#60a5fa;">${APP_URL}/login</a> and change it from your profile.</p>`
+    : `<p class="text">Please log in and change your password immediately from your profile settings.</p>
+       <a href="${APP_URL}/login" class="btn">Log In Now →</a>`
+
+  const content = `
+    <p class="text">Hello ${opts.name},</p>
+    <p class="text">Welcome to <strong>Cittaa Mind Bridge</strong> — the school counselling management platform. Your account has been set up and is ready to use.</p>
+    <div class="info-box">
+      <div class="info-row"><span class="info-label">Email</span><span class="info-value">${opts.to}</span></div>
+      <div class="info-row"><span class="info-label">Temporary Password</span><span class="info-value" style="font-family:monospace;letter-spacing:1px;">${opts.temporaryPassword}</span></div>
+      <div class="info-row"><span class="info-label">Role</span><span class="info-value">${roleLabel}</span></div>
+      ${opts.schoolName ? `<div class="info-row"><span class="info-label">School</span><span class="info-value">${opts.schoolName}</span></div>` : ''}
+    </div>
+    ${ctaBlock}
+  `
+  return send(opts.to, 'Welcome to Cittaa Mind Bridge — Your Account is Ready',
+    baseTemplate(content, 'Welcome to Cittaa Mind Bridge 🧠'))
+}
+
+export async function sendPasswordResetEmail(opts: {
+  to: string
+  name: string
+  resetUrl: string
 }) {
   const content = `
     <p class="text">Hello ${opts.name},</p>
-    <p class="text">Welcome to <strong>Cittaa Mind Bridge</strong> — the school counselling management platform. Your account has been created.</p>
-    <div class="info-box">
-      <div class="info-row"><span class="info-label">Email</span><span class="info-value">${opts.to}</span></div>
-      <div class="info-row"><span class="info-label">Temporary Password</span><span class="info-value">${opts.temporaryPassword}</span></div>
-      <div class="info-row"><span class="info-label">Role</span><span class="info-value">${opts.role}</span></div>
-      ${opts.schoolName ? `<div class="info-row"><span class="info-label">School</span><span class="info-value">${opts.schoolName}</span></div>` : ''}
-    </div>
-    <p class="text">Please log in and change your password immediately.</p>
-    <a href="${APP_URL}/login" class="btn">Log In Now →</a>
+    <p class="text">We received a request to reset the password for your Cittaa Mind Bridge account.</p>
+    <p class="text">Click the button below to reset your password. This link is valid for <strong>1 hour</strong>.</p>
+    <a href="${opts.resetUrl}" class="btn">Reset My Password →</a>
+    <p class="text" style="margin-top:20px;font-size:12px;color:#94a3b8;">
+      If you did not request a password reset, please ignore this email. Your password will remain unchanged.
+      <br/>If you're concerned, contact us at <a href="mailto:support@cittaa.in" style="color:#60a5fa;">support@cittaa.in</a>.
+    </p>
   `
-  return send(opts.to, 'Welcome to Cittaa Mind Bridge',
-    baseTemplate(content, 'Welcome to Cittaa Mind Bridge 🧠'))
+  return send(opts.to, 'Reset Your Cittaa Mind Bridge Password',
+    baseTemplate(content, 'Password Reset Request 🔐'))
 }

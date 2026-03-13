@@ -58,7 +58,7 @@ export function Sidebar({ onClose }: SidebarProps) {
             <Brain size={18} className="text-white" />
           </div>
           <div>
-            <div className="font-bold text-slate-900 text-sm leading-none">Cittaa</div>
+            <div className="cittaa-brand text-slate-900 text-base leading-none">Cittaa</div>
             <div className="text-xs text-slate-400">Mind Bridge</div>
           </div>
         </div>

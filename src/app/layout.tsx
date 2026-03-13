@@ -1,7 +1,21 @@
 import type { Metadata } from 'next'
+import { Kaushan_Script, Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 import { Toaster } from 'react-hot-toast'
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
+
+const kaushanScript = Kaushan_Script({
+  weight: '400',
+  subsets: ['latin'],
+  variable: '--font-kaushan',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'Cittaa Mind Bridge – School Counselling Platform',
@@ -10,8 +24,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>
+    <html lang="en" className={`${inter.variable} ${kaushanScript.variable}`}>
+      <body className={inter.className}>
         <Providers>
           {children}
           <Toaster

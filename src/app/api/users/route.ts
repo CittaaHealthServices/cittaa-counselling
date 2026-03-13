@@ -1,10 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
+import crypto from 'crypto'
 import { authOptions } from '@/lib/auth'
 import connectDB from '@/lib/db'
 import User from '@/models/User'
 import { sendWelcomeEmail } from '@/lib/email'
 import { Role } from '@/types'
+
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://counseling.cittaa.in'
 
 // ─── GET /api/users — list users ──────────────────────────────────────────────
 export async function GET(req: NextRequest) {
@@ -39,6 +42,16 @@ export async function GET(req: NextRequest) {
       if (userRole) filter.role = userRole
       else filter.role = { $in: ['CLASS_TEACHER', 'COORDINATOR'] }
     }
+  } else if (role === 'PSYCHOLOGIST') {
+    // Psychologists can fetch teachers/coordinators for a school (to share observations)
+    const filterSchool = searchParams.get('schoolId')
+    if (filterSchool) filter.schoolId = filterSchool
+    const allowedRoles = ['CLASS_TEACHER', 'COORDINATOR', 'SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN']
+    if (userRole && allowedRoles.includes(userRole)) filter.role = userRole
+    else filter.role = { $in: allowedRoles }
+  } else if (role === 'RCI_TEAM') {
+    // RCI team can only list RCI members and psychologists
+    filter.role = { $in: ['RCI_TEAM', 'PSYCHOLOGIST'] }
   } else {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
@@ -88,8 +101,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Email already exists' }, { status: 409 })
   }
 
-  // Generate temp password
-  const tempPassword = `Cittaa@${Math.floor(1000 + Math.random() * 9000)}`
+  // Generate temp password + set-password token (valid 72 hours for new users)
+  const tempPassword    = `Cittaa@${Math.floor(1000 + Math.random() * 9000)}`
+  const resetToken      = crypto.randomBytes(32).toString('hex')
+  const resetTokenExpiry = new Date(Date.now() + 72 * 60 * 60 * 1000)
 
   const user = await User.create({
     name,
@@ -102,6 +117,8 @@ export async function POST(req: NextRequest) {
     specialization: specialization ? specialization.split(',').map((s: string) => s.trim()) : [],
     employeeId,
     createdBy: session.user.id,
+    resetToken,
+    resetTokenExpiry,
   })
 
   const populated = await User.findById(user._id)
@@ -109,13 +126,17 @@ export async function POST(req: NextRequest) {
     .select('-passwordHash')
     .lean()
 
-  // Send welcome email
+  // Build set-password URL so new user can set their own password directly
+  const setPasswordUrl = `${APP_URL}/reset-password?token=${resetToken}`
+
+  // Send welcome email with credentials + one-click set-password link
   await sendWelcomeEmail({
     to: email,
     name,
     role,
     schoolName: (populated as any)?.schoolId?.name,
     temporaryPassword: tempPassword,
+    setPasswordUrl,
   })
 
   return NextResponse.json({ user: populated }, { status: 201 })

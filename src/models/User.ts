@@ -18,6 +18,8 @@ export interface IUserDoc extends Document {
   profilePhoto?: string
   createdBy?: mongoose.Types.ObjectId   // Who created this user (for school sub-logins)
   lastLogin?: Date
+  resetToken?: string                    // for password reset / first-time set-password
+  resetTokenExpiry?: Date               // token validity window
   createdAt: Date
   updatedAt: Date
   // Virtual method
@@ -42,8 +44,10 @@ const UserSchema = new Schema<IUserDoc>(
     specialization: [{ type: String }],
     employeeId:     { type: String },
     profilePhoto:   { type: String },
-    createdBy:      { type: Schema.Types.ObjectId, ref: 'User' },
-    lastLogin:      { type: Date },
+    createdBy:        { type: Schema.Types.ObjectId, ref: 'User' },
+    lastLogin:        { type: Date },
+    resetToken:       { type: String, select: false },
+    resetTokenExpiry: { type: Date,   select: false },
   },
   { timestamps: true }
 )
