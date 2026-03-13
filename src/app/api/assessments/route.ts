@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
   if (role === 'PSYCHOLOGIST') {
     filter.requestedById = new mongoose.Types.ObjectId(session.user.id)
-  } else if (['SCHOOL_PRINCIPAL'].includes(role)) {
+  } else if (['SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN'].includes(role)) {
     const schoolRequests = await CounselingRequest.find(
       { schoolId: new mongoose.Types.ObjectId(schoolId!) }, '_id'
     ).lean()

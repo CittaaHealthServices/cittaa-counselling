@@ -118,7 +118,7 @@ export function Sidebar({ onClose }: SidebarProps) {
           </div>
         </div>
         <button
-          onClick={() => signOut({ callbackUrl: '/login' })}
+          onClick={() => signOut({ callbackUrl: `${window.location.origin}/login` })}
           className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm text-slate-500
                      hover:bg-red-50 hover:text-red-600 transition-colors"
         >

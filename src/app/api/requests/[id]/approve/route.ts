@@ -6,6 +6,7 @@ import CounselingRequest from '@/models/CounselingRequest'
 import Notification from '@/models/Notification'
 import User from '@/models/User'
 import { sendRequestApprovedEmail, sendRequestRejectedEmail } from '@/lib/email'
+import { writeAudit } from '@/lib/audit'
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   const session = await getServerSession(authOptions)
@@ -90,6 +91,17 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         )
       : Promise.resolve(),
   ])
+
+
+  // Write audit log
+  await writeAudit(session, {
+    action: action === 'approve' ? 'REQUEST_APPROVED' : 'REQUEST_REJECTED',
+    resource: 'CounselingRequest',
+    resourceId: request._id.toString(),
+    schoolId: request.schoolId?.toString(),
+    details: { newStatus, reason: reason || undefined },
+    req,
+  })
 
   return NextResponse.json({ request })
 }

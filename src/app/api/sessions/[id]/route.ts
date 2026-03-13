@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import connectDB from '@/lib/db'
+import { writeAudit } from '@/lib/audit'
 import Session from '@/models/Session'
 import CounselingRequest from '@/models/CounselingRequest'
 import Notification from '@/models/Notification'
@@ -87,12 +88,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         userId: request.submittedById,
         title: 'Session Completed',
         message: `Counselling session for request ${request.requestNumber} has been completed`,
-        type: 'SESSION_SCHEDULED',
+        type: 'GENERAL',
         link: `/dashboard/requests/${request._id}`,
         relatedId: request._id.toString(),
       })
     }
   }
 
-  return NextResponse.json({ session: existingSession })
+  await writeAudit(session, {
+    action: status === 'COMPLETED' ? 'SESSION_COMPLETED' : 'SESSION_UPDATED',
+    resource: 'Session',
+    resourceId: params.id,
+    details: { status, followUpRequired },
+    req,
+  })
+    return NextResponse.json({ session: existingSession })
 }

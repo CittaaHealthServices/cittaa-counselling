@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import connectDB from '@/lib/db'
+import { writeAudit } from '@/lib/audit'
 import Session from '@/models/Session'
 import CounselingRequest from '@/models/CounselingRequest'
 import Notification from '@/models/Notification'
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
   } else if (role === 'RCI_TEAM') {
     // RCI doesn't need sessions view
     return NextResponse.json({ sessions: [] })
-  } else if (['SCHOOL_PRINCIPAL', 'COORDINATOR', 'CLASS_TEACHER'].includes(role)) {
+  } else if (['SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN', 'COORDINATOR', 'CLASS_TEACHER'].includes(role)) {
     // Get all request IDs for this school
     const schoolRequests = await CounselingRequest.find(
       { schoolId: new mongoose.Types.ObjectId(schoolId!) },
@@ -32,6 +33,7 @@ export async function GET(req: NextRequest) {
     ).lean()
     filter.requestId = { $in: schoolRequests.map((r: any) => r._id) }
   }
+  // CITTAA_ADMIN and CITTAA_SUPPORT see all sessions
 
   const status = req.nextUrl.searchParams.get('status')
   if (status) filter.status = status
@@ -72,12 +74,12 @@ export async function POST(req: NextRequest) {
     .populate('submittedById', 'name email')
 
   if (!request) return NextResponse.json({ error: 'Request not found' }, { status: 404 })
-  if (!['APPROVED', 'PSYCHOLOGIST_ASSIGNED'].includes(request.status)) {
+
+  // Allow scheduling from first assignment, follow-up after completion, or rescheduling
+  const schedulableStatuses = ['APPROVED', 'PSYCHOLOGIST_ASSIGNED', 'SESSION_COMPLETED', 'SESSION_SCHEDULED']
+  if (!schedulableStatuses.includes(request.status)) {
     return NextResponse.json({ error: 'Request must be assigned before scheduling' }, { status: 400 })
   }
-
-  // Determine the psychologist
-  const psychologistId = substituteId || session.user.id
 
   const newSession = await Session.create({
     requestId,
@@ -90,42 +92,48 @@ export async function POST(req: NextRequest) {
     notes,
   })
 
-  // Update request status
-  request.status = 'SESSION_SCHEDULED' as any
-  request.statusHistory.push({
-    status: 'SESSION_SCHEDULED',
-    changedBy: session.user.id as any,
-    note: `Session scheduled for ${new Date(scheduledAt).toLocaleString('en-IN')}`,
-    timestamp: new Date(),
-  })
-  await request.save()
+  // Only move request to SESSION_SCHEDULED if it hasn't been there yet
+  if (['PSYCHOLOGIST_ASSIGNED', 'APPROVED'].includes(request.status)) {
+    request.status = 'SESSION_SCHEDULED' as any
+    request.statusHistory.push({
+      status: 'SESSION_SCHEDULED',
+      changedBy: session.user.id as any,
+      note: `Session scheduled for ${new Date(scheduledAt).toLocaleString('en-IN')}`,
+      timestamp: new Date(),
+    })
+    await request.save()
+  }
 
-  const student  = request.studentId as any
-  const school   = request.schoolId as any
+  const student   = request.studentId as any
   const submitter = request.submittedById as any
-
-  // Notify submitter
   const psychologist = await User.findById(session.user.id, 'name email')
 
   await Promise.all([
     Notification.create({
-      userId: submitter._id,
-      title: 'Session Scheduled',
+      userId:  submitter._id,
+      title:   'Session Scheduled',
       message: `Session for ${student.name} scheduled on ${new Date(scheduledAt).toLocaleString('en-IN')}`,
-      type: 'SESSION_SCHEDULED',
-      link: `/dashboard/requests/${requestId}`,
+      type:    'SESSION_SCHEDULED',
+      link:    `/dashboard/requests/${requestId}`,
       relatedId: requestId,
     }),
     sendSessionScheduledEmail({
-      to: submitter.email,
-      recipientName: submitter.name,
-      requestNumber: request.requestNumber,
-      studentName: student.name,
-      scheduledAt: new Date(scheduledAt).toLocaleString('en-IN'),
+      to:              submitter.email,
+      recipientName:   submitter.name,
+      requestNumber:   request.requestNumber,
+      studentName:     student.name,
+      scheduledAt:     new Date(scheduledAt).toLocaleString('en-IN'),
       psychologistName: psychologist?.name || 'Assigned Psychologist',
-      requestId: requestId.toString(),
+      requestId:       requestId.toString(),
     }),
   ])
 
-  return NextResponse.json({ session: newSession }, { status: 201 })
+  await writeAudit(session, {
+    action: 'SESSION_SCHEDULED',
+    resource: 'Session',
+    resourceId: newSession._id.toString(),
+    details: { requestId, scheduledAt },
+    req,
+  })
+    return NextResponse.json({ session: newSession }, { status: 201 })
 }

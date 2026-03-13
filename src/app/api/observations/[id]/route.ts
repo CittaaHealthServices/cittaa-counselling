@@ -7,6 +7,7 @@ import CounselingRequest from '@/models/CounselingRequest'
 import Notification from '@/models/Notification'
 import User from '@/models/User'
 import { generateRequestNumber } from '@/lib/utils'
+import { writeAudit } from '@/lib/audit'
 import { sendObservationEscalatedEmail } from '@/lib/email-observations'
 
 // ─── GET /api/observations/[id] ───────────────────────────────────────────────
@@ -91,6 +92,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       ])
     }
 
+    await writeAudit(session, { action: 'OBSERVATION_SHARED', resource: 'Observation', resourceId: params.id, req })
     return NextResponse.json({ observation: obs })
   }
 
@@ -118,6 +120,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       relatedId: obs._id.toString(),
     })
 
+    await writeAudit(session, { action: 'OBSERVATION_ACKNOWLEDGED', resource: 'Observation', resourceId: params.id, req })
     return NextResponse.json({ observation: obs })
   }
 
@@ -214,6 +217,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       }),
     ])
 
+    await writeAudit(session, { action: 'OBSERVATION_ESCALATED', resource: 'Observation', resourceId: params.id, details: { requestNumber: counsellingReq.requestNumber }, req })
     return NextResponse.json({
       observation: obs,
       counsellingRequest: { _id: counsellingReq._id, requestNumber },
@@ -242,6 +246,7 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       relatedId: obs._id.toString(),
     })
 
+    await writeAudit(session, { action: 'OBSERVATION_DECLINED', resource: 'Observation', resourceId: params.id, req })
     return NextResponse.json({ observation: obs })
   }
 

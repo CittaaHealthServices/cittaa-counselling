@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import connectDB from '@/lib/db'
+import { writeAudit } from '@/lib/audit'
 import CounselingRequest from '@/models/CounselingRequest'
 import User from '@/models/User'
 import Notification from '@/models/Notification'
@@ -92,5 +93,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     }),
   ])
 
-  return NextResponse.json({ request, psychologist: { name: psychologist.name, isSubstitute } })
+  await writeAudit(session, {
+    action: 'PSYCHOLOGIST_ASSIGNED',
+    resource: 'CounselingRequest',
+    resourceId: request._id.toString(),
+    schoolId: request.schoolId?.toString(),
+    details: { psychologistId, isSubstitute },
+    req,
+  })
+    return NextResponse.json({ request, psychologist: { name: psychologist.name, isSubstitute } })
 }

@@ -11,6 +11,8 @@ export interface IRCIReportDoc extends Document {
   visitDate?: Date
   findings?: string
   recommendations?: string
+  reportUrl?: string          // Link to uploaded/shared report document
+  internalNotes?: string      // Internal Cittaa admin notes (not visible to school)
   status: RCIStatus
   notifiedAt?: Date
   reportSubmittedAt?: Date
@@ -28,6 +30,8 @@ const RCIReportSchema = new Schema<IRCIReportDoc>(
     visitDate:         { type: Date },
     findings:          { type: String },
     recommendations:   { type: String },
+    reportUrl:         { type: String },
+    internalNotes:     { type: String },
     status:            {
       type: String,
       enum: ['NOTIFIED', 'VISIT_SCHEDULED', 'VISITING', 'REPORT_SUBMITTED'],

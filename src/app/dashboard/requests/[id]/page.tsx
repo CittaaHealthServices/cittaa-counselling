@@ -6,7 +6,7 @@ import Link from 'next/link'
 import toast from 'react-hot-toast'
 import {
   ArrowLeft, CheckCircle, XCircle, UserPlus, Calendar, Clock, AlertTriangle, Lock,
-  ChevronDown, ChevronUp, Clipboard,
+  ChevronDown, ChevronUp, Clipboard, FolderX,
 } from 'lucide-react'
 import { cn, STATUS_LABELS, STATUS_COLORS, PRIORITY_COLORS, PRIORITY_DOT, formatDateTime, ROLE_LABELS } from '@/lib/utils'
 import { ASSESSMENT_TYPES } from '@/models/Assessment'
@@ -25,10 +25,12 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
   const [showSession,   setShowSession]   = useState(false)
   const [showAssessment,setShowAssessment]= useState(false)
   const [showComplete,  setShowComplete]  = useState(false)
+  const [showClose,     setShowClose]     = useState(false)
   const [showHistory,   setShowHistory]   = useState(false)
   const [actionLoading, setActionLoading] = useState(false)
 
   // Form states
+  const [closingNote,        setClosingNote]         = useState('')
   const [rejectReason,       setRejectReason]       = useState('')
   const [psychologists,      setPsychologists]      = useState<any[]>([])
   const [selectedPsych,      setSelectedPsych]      = useState('')
@@ -128,6 +130,19 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
     } finally { setActionLoading(false) }
   }
 
+  async function handleCloseCase() {
+    setActionLoading(true)
+    try {
+      const res = await fetch(`/api/requests/${params.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'close', closingNote }),
+      })
+      if (res.ok) { toast.success('Case closed successfully'); setShowClose(false); loadData() }
+      else { const d = await res.json(); toast.error(d.error || 'Failed to close case') }
+    } finally { setActionLoading(false) }
+  }
+
   async function handleCompleteSession() {
     const session_id = data?.sessions?.[0]?._id
     if (!session_id) { toast.error('No session found'); return }
@@ -158,10 +173,14 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
   // What actions are available?
   const canApprove     = ['SCHOOL_PRINCIPAL', 'CITTAA_ADMIN'].includes(role || '') && request.status === 'PENDING_APPROVAL'
   const canAssign      = role === 'CITTAA_ADMIN' && request.status === 'APPROVED'
-  const canSchedule    = role === 'PSYCHOLOGIST' && ['PSYCHOLOGIST_ASSIGNED'].includes(request.status)
+  // Psychologist can schedule on first assignment or for a follow-up after session completed
+  const canSchedule    = role === 'PSYCHOLOGIST' && ['PSYCHOLOGIST_ASSIGNED', 'SESSION_COMPLETED'].includes(request.status)
   const canComplete    = role === 'PSYCHOLOGIST' && request.status === 'SESSION_SCHEDULED'
   const canReqAssess   = role === 'PSYCHOLOGIST' && request.status === 'SESSION_COMPLETED'
-  const viewAssessments= ['PSYCHOLOGIST', 'SCHOOL_PRINCIPAL', 'CITTAA_ADMIN'].includes(role || '')
+  const viewAssessments= ['PSYCHOLOGIST', 'SCHOOL_PRINCIPAL', 'CITTAA_ADMIN', 'SCHOOL_ADMIN'].includes(role || '')
+  const CLOSABLE_STATUSES = ['SESSION_COMPLETED', 'ASSESSMENT_REJECTED', 'RCI_REPORT_SUBMITTED', 'APPROVED', 'PSYCHOLOGIST_ASSIGNED']
+  const canClose       = ['CITTAA_ADMIN', 'SCHOOL_PRINCIPAL'].includes(role || '') &&
+    CLOSABLE_STATUSES.includes(request.status)
 
   return (
     <div className="max-w-4xl space-y-5">
@@ -379,7 +398,13 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
               </button>
             )}
 
-            {!canApprove && !canAssign && !canSchedule && !canComplete && !canReqAssess && (
+            {canClose && (
+              <button onClick={() => setShowClose(true)} className="btn-secondary w-full justify-center border-red-200 text-red-600 hover:bg-red-50">
+                <FolderX size={15} /> Close Case
+              </button>
+            )}
+
+            {!canApprove && !canAssign && !canSchedule && !canComplete && !canReqAssess && !canClose && (
               <p className="text-xs text-slate-400 text-center py-2">No actions available for current status</p>
             )}
           </div>
@@ -485,6 +510,26 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
             </button>
             <button onClick={() => setShowComplete(false)} className="btn-secondary">Cancel</button>
           </div>
+        </div>
+      </Modal>
+
+      {/* Close case */}
+      <Modal open={showClose} onClose={() => setShowClose(false)} title="Close This Case">
+        <p className="text-sm text-slate-600 mb-4">
+          Closing this case will mark it as <strong>Closed</strong> and notify the submitter. This action cannot be undone.
+        </p>
+        <div className="mb-4">
+          <label className="form-label">Closing Note (optional)</label>
+          <textarea value={closingNote} onChange={(e) => setClosingNote(e.target.value)}
+            className="form-textarea" rows={3}
+            placeholder="e.g. Student situation resolved, case closed by admin…" />
+        </div>
+        <div className="flex gap-3">
+          <button onClick={handleCloseCase} disabled={actionLoading}
+            className="flex-1 justify-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 flex items-center gap-2">
+            {actionLoading ? 'Closing…' : <><FolderX size={15} /> Close Case</>}
+          </button>
+          <button onClick={() => setShowClose(false)} className="btn-secondary">Cancel</button>
         </div>
       </Modal>
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import connectDB from '@/lib/db'
+import { writeAudit } from '@/lib/audit'
 import Assessment from '@/models/Assessment'
 import CounselingRequest from '@/models/CounselingRequest'
 import RCIReport from '@/models/RCIReport'
@@ -47,6 +48,49 @@ export async function GET(_req: NextRequest, { params }: { params: { id: string 
     .lean()
 
   return NextResponse.json({ assessment, rciReport })
+}
+
+// PATCH /api/assessments/:id — update assessment progress (IN_PROGRESS / COMPLETED)
+// Used by RCI_TEAM or CITTAA_ADMIN to advance an approved assessment through its lifecycle
+export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
+  const session = await getServerSession(authOptions)
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  if (!['CITTAA_ADMIN', 'RCI_TEAM'].includes(session.user.role)) {
+    return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
+  }
+
+  await connectDB()
+
+  const { status, scheduledDate, completedDate, findings } = await req.json()
+
+  const assessment = await Assessment.findById(params.id)
+  if (!assessment) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  if (assessment.status === 'REJECTED' || assessment.status === 'PENDING_APPROVAL') {
+    return NextResponse.json({ error: 'Assessment cannot be updated in current status' }, { status: 400 })
+  }
+
+  if (status)         assessment.status        = status as any
+  if (scheduledDate)  assessment.scheduledDate = new Date(scheduledDate)
+  if (completedDate)  assessment.completedDate = new Date(completedDate)
+  if (findings)       assessment.findings      = findings
+
+  await assessment.save()
+
+  // Notify requestedBy when completed
+  if (status === 'COMPLETED') {
+    await Notification.create({
+      userId:    assessment.requestedById,
+      title:     'Assessment Completed',
+      message:   `Assessment for request has been completed and findings are available.`,
+      type:      'GENERAL',
+      link:      `/dashboard/assessments/${assessment._id}`,
+      relatedId: assessment._id.toString(),
+    })
+  }
+
+  return NextResponse.json({ assessment })
 }
 
 // Approve or reject assessment, and if approved — assign RCI
@@ -161,5 +205,12 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     ])
   }
 
-  return NextResponse.json({ assessment, rciReport })
+  await writeAudit(session, {
+    action: action === 'approve' ? 'ASSESSMENT_APPROVED' : action === 'assign_rci' ? 'RCI_ASSIGNED' : 'ASSESSMENT_REJECTED',
+    resource: 'Assessment',
+    resourceId: assessment._id.toString(),
+    details: { action, approvalNote, rejectionReason },
+    req,
+  })
+    return NextResponse.json({ assessment, rciReport })
 }

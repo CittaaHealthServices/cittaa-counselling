@@ -3,6 +3,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import connectDB from '@/lib/db'
 import User from '@/models/User'
 import { Role } from '@/types'
+import AuditLog from '@/models/AuditLog'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -29,6 +30,22 @@ export const authOptions: NextAuthOptions = {
 
         // Update last login
         await User.findByIdAndUpdate(user._id, { lastLogin: new Date() })
+
+        // Audit: record login event as tamper-evident proof
+        try {
+          await AuditLog.create({
+            userId:    user._id.toString(),
+            userEmail: user.email,
+            userRole:  user.role,
+            action:    'LOGIN',
+            resource:  'User',
+            resourceId: user._id.toString(),
+            schoolId:  user.schoolId?._id?.toString() ?? undefined,
+            details:   { name: user.name },
+          })
+        } catch (err) {
+          console.error('[AuditLog] Failed to write LOGIN audit:', err)
+        }
 
         return {
           id:       user._id.toString(),
