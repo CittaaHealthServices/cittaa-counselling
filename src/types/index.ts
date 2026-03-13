@@ -78,6 +78,21 @@ export const CONCERN_CATEGORIES = [
 
 export type ConcernCategory = (typeof CONCERN_CATEGORIES)[number]
 
+// ─── Assessment Types ─────────────────────────────────────────────────────────
+export const ASSESSMENT_TYPES = [
+  'Psychological Evaluation',
+  'Learning Disability Assessment',
+  'ADHD Assessment',
+  'Autism Spectrum Assessment',
+  'Behavioural Assessment',
+  'Emotional Wellbeing Assessment',
+  'Cognitive Assessment',
+  'Academic Performance Assessment',
+  'Other',
+] as const
+
+export type AssessmentType = (typeof ASSESSMENT_TYPES)[number]
+
 // ─── Session interfaces (for API responses) ───────────────────────────────────
 export interface IUser {
   _id: string

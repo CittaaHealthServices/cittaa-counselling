@@ -1,17 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose'
-import { AssessmentStatus } from '@/types'
-
-export const ASSESSMENT_TYPES = [
-  'Psychological Evaluation',
-  'Learning Disability Assessment',
-  'ADHD Assessment',
-  'Autism Spectrum Assessment',
-  'Behavioural Assessment',
-  'Emotional Wellbeing Assessment',
-  'Cognitive Assessment',
-  'Academic Performance Assessment',
-  'Other',
-] as const
+import { AssessmentStatus, ASSESSMENT_TYPES } from '@/types'
 
 export interface IAssessmentDoc extends Document {
   _id: mongoose.Types.ObjectId

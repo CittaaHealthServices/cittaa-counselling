@@ -9,7 +9,7 @@ import {
   ChevronDown, ChevronUp, Clipboard, FolderX,
 } from 'lucide-react'
 import { cn, STATUS_LABELS, STATUS_COLORS, PRIORITY_COLORS, PRIORITY_DOT, formatDateTime, ROLE_LABELS } from '@/lib/utils'
-import { ASSESSMENT_TYPES } from '@/models/Assessment'
+import { ASSESSMENT_TYPES } from '@/types'
 
 export default function RequestDetailPage({ params }: { params: { id: string } }) {
   const { data: session } = useSession()
