@@ -5,13 +5,14 @@ import { signOut, useSession } from 'next-auth/react'
 import {
   Brain, LayoutDashboard, FileText, Calendar, ClipboardList,
   Map, School, Users, UserCog, LogOut, X, Settings, BookOpen, Eye,
+  type LucideIcon,
 } from 'lucide-react'
 import { cn, ROLE_LABELS } from '@/lib/utils'
 
 interface NavItem {
   href: string
   label: string
-  icon: React.ComponentType<{ size?: number; className?: string }>
+  icon: LucideIcon
   roles?: string[]
 }
 
