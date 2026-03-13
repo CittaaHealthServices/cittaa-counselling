@@ -65,7 +65,7 @@ async function send(to: string | string[], subject: string, html: string) {
     if (error) console.error('[Resend]', error)
     return data
   } catch (err) {
-    console.error('[Resend] Failed to send email:', err)
+    console.error('[Resend] Failed to send email:', err instanceof Error ? err.message : String(err))
   }
 }
 

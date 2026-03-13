@@ -60,15 +60,21 @@ export async function POST(req: NextRequest) {
   try {
     const result = await Student.insertMany(docs, { ordered: false })
     inserted = result.length
-  } catch (err: any) {
+  } catch (err) {
     // BulkWriteError: some succeeded, some failed (e.g. duplicate roll numbers)
-    if (err.code === 11000 || err.name === 'MongoBulkWriteError') {
-      inserted = err.result?.nInserted || 0
-      skipped  = docs.length - inserted
-      errors.push(`${skipped} students skipped (duplicate roll numbers)`)
+    if (err instanceof Error && 'code' in err && 'result' in err) {
+      const mongoErr = err as any
+      if (mongoErr.code === 11000 || mongoErr.name === 'MongoBulkWriteError') {
+        inserted = mongoErr.result?.nInserted || 0
+        skipped  = docs.length - inserted
+        errors.push(`${skipped} students skipped (duplicate roll numbers)`)
+      } else {
+        console.error('Bulk insert error:', err)
+        return NextResponse.json({ error: 'Bulk insert failed', details: err instanceof Error ? err.message : String(err) }, { status: 500 })
+      }
     } else {
       console.error('Bulk insert error:', err)
-      return NextResponse.json({ error: 'Bulk insert failed', details: err.message }, { status: 500 })
+      return NextResponse.json({ error: 'Bulk insert failed', details: err instanceof Error ? err.message : String(err) }, { status: 500 })
     }
   }
 

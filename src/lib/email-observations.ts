@@ -37,7 +37,7 @@ function base(content: string, title: string) {
 async function send(to: string | string[], subject: string, html: string) {
   try {
     await resend.emails.send({ from: FROM, to: Array.isArray(to) ? to : [to], subject, html })
-  } catch (e) { console.error('[Resend]', e) }
+  } catch (e) { console.error('[Resend]', e instanceof Error ? e.message : String(e)) }
 }
 
 // ─── Observation shared with teacher ─────────────────────────────────────────
