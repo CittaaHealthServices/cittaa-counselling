@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
-import dbConnect from '@/lib/db'
+import { authOptions } from '@/lib/auth'
+import connectDB from '@/lib/db'
 import Student from '@/models/Student'
 
 // GET /api/students/:id
@@ -17,7 +17,7 @@ export async function GET(
   const role     = session.user.role as string
   const schoolId = session.user.schoolId as string | undefined
 
-  await dbConnect()
+  await connectDB()
   try {
     const student = await Student.findById(params.id)
       .populate('schoolId', 'name city state')
@@ -67,7 +67,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  await dbConnect()
+  await connectDB()
   try {
     const existing = await Student.findById(params.id).lean()
     if (!existing) {

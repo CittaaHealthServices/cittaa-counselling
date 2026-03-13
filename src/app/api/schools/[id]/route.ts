@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/app/api/auth/[...nextauth]/route'
-import dbConnect from '@/lib/db'
+import { authOptions } from '@/lib/auth'
+import connectDB from '@/lib/db'
 import School from '@/models/School'
 
 // GET /api/schools/:id
@@ -14,7 +14,7 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  await dbConnect()
+  await connectDB()
   try {
     const school = await School.findById(params.id).lean()
     if (!school) {
@@ -42,7 +42,7 @@ export async function PATCH(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  await dbConnect()
+  await connectDB()
   try {
     const body = await req.json()
 
@@ -89,7 +89,7 @@ export async function DELETE(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  await dbConnect()
+  await connectDB()
   try {
     const school = await School.findByIdAndUpdate(
       params.id,

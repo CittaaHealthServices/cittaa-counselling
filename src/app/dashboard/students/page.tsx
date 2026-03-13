@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { Plus, Search, Upload, ChevronLeft, ChevronRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn } from '@/lib/utils'
@@ -8,6 +9,7 @@ import type { IStudent } from '@/types'
 
 export default function StudentsPage() {
   const { data: session } = useSession()
+  const router = useRouter()
 
   const [students, setStudents] = useState<IStudent[]>([])
   const [total, setTotal] = useState(0)
@@ -267,8 +269,12 @@ export default function StudentsPage() {
               </thead>
               <tbody>
                 {students.map((student) => (
-                  <tr key={student._id}>
-                    <td className="font-medium text-slate-900">{student.name}</td>
+                  <tr
+                    key={student._id}
+                    className="cursor-pointer hover:bg-blue-50 transition-colors"
+                    onClick={() => router.push(`/dashboard/students/${student._id}`)}
+                  >
+                    <td className="font-medium text-slate-900 hover:text-blue-700">{student.name}</td>
                     <td className="text-slate-600 text-sm">{student.rollNumber || '—'}</td>
                     <td className="text-slate-600 text-sm">
                       {student.class}

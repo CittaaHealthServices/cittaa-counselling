@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import {
   Brain, LayoutDashboard, FileText, Calendar, ClipboardList,
-  Map, School, Users, UserCog, LogOut, X, Settings, BookOpen, Eye,
+  Map, School, Users, UserCog, LogOut, X, Settings, BookOpen, Eye, Bell,
   type LucideIcon,
 } from 'lucide-react'
 import { cn, ROLE_LABELS } from '@/lib/utils'
@@ -18,22 +18,29 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard',               label: 'Dashboard',      icon: LayoutDashboard },
-  { href: '/dashboard/requests',      label: 'Requests',       icon: FileText },
+  { href: '/dashboard/requests',      label: 'Requests',       icon: FileText,
+    roles: ['PSYCHOLOGIST', 'SCHOOL_PRINCIPAL', 'COORDINATOR', 'CLASS_TEACHER',
+            'CITTAA_ADMIN', 'CITTAA_SUPPORT', 'SCHOOL_ADMIN'] },
   { href: '/dashboard/observations',  label: 'Observations',   icon: Eye,
-    roles: ['PSYCHOLOGIST', 'SCHOOL_PRINCIPAL', 'COORDINATOR', 'CLASS_TEACHER', 'CITTAA_ADMIN', 'SCHOOL_ADMIN'] },
+    roles: ['PSYCHOLOGIST', 'SCHOOL_PRINCIPAL', 'COORDINATOR', 'CLASS_TEACHER',
+            'CITTAA_ADMIN', 'CITTAA_SUPPORT', 'SCHOOL_ADMIN'] },
   { href: '/dashboard/sessions',      label: 'Sessions',       icon: Calendar,
-    roles: ['PSYCHOLOGIST', 'SCHOOL_PRINCIPAL', 'CITTAA_ADMIN', 'SCHOOL_ADMIN', 'COORDINATOR', 'CLASS_TEACHER'] },
+    roles: ['PSYCHOLOGIST', 'SCHOOL_PRINCIPAL', 'CITTAA_ADMIN', 'CITTAA_SUPPORT',
+            'SCHOOL_ADMIN', 'COORDINATOR', 'CLASS_TEACHER'] },
   { href: '/dashboard/assessments',   label: 'Assessments',    icon: ClipboardList,
-    roles: ['PSYCHOLOGIST', 'SCHOOL_PRINCIPAL', 'CITTAA_ADMIN', 'RCI_TEAM', 'SCHOOL_ADMIN'] },
+    roles: ['PSYCHOLOGIST', 'SCHOOL_PRINCIPAL', 'CITTAA_ADMIN', 'CITTAA_SUPPORT',
+            'RCI_TEAM', 'SCHOOL_ADMIN'] },
   { href: '/dashboard/rci',           label: 'RCI Reports',    icon: Map,
-    roles: ['RCI_TEAM', 'CITTAA_ADMIN', 'SCHOOL_PRINCIPAL'] },
+    roles: ['RCI_TEAM', 'CITTAA_ADMIN', 'CITTAA_SUPPORT', 'SCHOOL_PRINCIPAL'] },
   { href: '/dashboard/students',      label: 'Students',       icon: BookOpen,
-    roles: ['SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN', 'COORDINATOR', 'CLASS_TEACHER', 'CITTAA_ADMIN'] },
+    roles: ['SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN', 'COORDINATOR', 'CLASS_TEACHER',
+            'CITTAA_ADMIN', 'CITTAA_SUPPORT', 'PSYCHOLOGIST'] },
   { href: '/dashboard/schools',       label: 'Schools',        icon: School,
     roles: ['CITTAA_ADMIN', 'CITTAA_SUPPORT'] },
   { href: '/dashboard/users',         label: 'Users',          icon: Users,
     roles: ['CITTAA_ADMIN', 'CITTAA_SUPPORT', 'SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN'] },
-  { href: '/dashboard/profile',       label: 'Profile',        icon: UserCog },
+  { href: '/dashboard/notifications',  label: 'Notifications',  icon: Bell },
+  { href: '/dashboard/profile',        label: 'Profile',        icon: UserCog },
 ]
 
 interface SidebarProps {

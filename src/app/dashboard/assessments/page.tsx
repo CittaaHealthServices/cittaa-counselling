@@ -2,7 +2,8 @@
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
-import { Plus, Search, Filter, ChevronLeft, ChevronRight, CheckCircle, XCircle } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Search, Filter, ChevronLeft, ChevronRight, CheckCircle, XCircle, ExternalLink } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn, STATUS_LABELS, STATUS_COLORS, formatDate } from '@/lib/utils'
 import type { IAssessment } from '@/types'
@@ -234,22 +235,31 @@ function AssessmentsContent() {
                       </td>
                       <td className="text-slate-600 text-sm">{requestedBy?.name}</td>
                       <td className="text-slate-400 text-xs">{formatDate(assessment.createdAt)}</td>
-                      {canApproveOrReject && assessment.status === 'PENDING_APPROVAL' && (
-                        <td className="space-x-2">
-                          <button
-                            onClick={() => openApproveModal(assessment)}
-                            className="text-green-600 hover:text-green-800 text-xs font-medium"
-                          >
-                            <CheckCircle size={16} className="inline mr-1" /> Approve
-                          </button>
-                          <button
-                            onClick={() => openRejectModal(assessment)}
-                            className="text-red-600 hover:text-red-800 text-xs font-medium"
-                          >
-                            <XCircle size={16} className="inline mr-1" /> Reject
-                          </button>
-                        </td>
-                      )}
+                      <td className="space-x-2 whitespace-nowrap">
+                        <Link
+                          href={`/dashboard/assessments/${assessment._id}`}
+                          className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ExternalLink size={14} className="inline mr-1" /> View
+                        </Link>
+                        {canApproveOrReject && assessment.status === 'PENDING_APPROVAL' && (
+                          <>
+                            <button
+                              onClick={() => openApproveModal(assessment)}
+                              className="text-green-600 hover:text-green-800 text-xs font-medium"
+                            >
+                              <CheckCircle size={16} className="inline mr-1" /> Approve
+                            </button>
+                            <button
+                              onClick={() => openRejectModal(assessment)}
+                              className="text-red-600 hover:text-red-800 text-xs font-medium"
+                            >
+                              <XCircle size={16} className="inline mr-1" /> Reject
+                            </button>
+                          </>
+                        )}
+                      </td>
                     </tr>
                   )
                 })}

@@ -1,6 +1,7 @@
 'use client'
 import { useEffect, useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { Plus, Search, ChevronLeft, ChevronRight, ToggleLeft, ToggleRight } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn, ROLE_LABELS } from '@/lib/utils'
@@ -17,6 +18,7 @@ const ROLE_COLORS: Record<string, string> = {
 
 export default function UsersPage() {
   const { data: session } = useSession()
+  const router = useRouter()
 
   const [users, setUsers] = useState<IUser[]>([])
   const [schools, setSchools] = useState<ISchool[]>([])
@@ -242,8 +244,12 @@ export default function UsersPage() {
                 {users.map((user) => {
                   const school = user.schoolId && typeof user.schoolId === 'object' ? user.schoolId : null
                   return (
-                    <tr key={user._id}>
-                      <td className="font-medium text-slate-900">{user.name}</td>
+                    <tr
+                      key={user._id}
+                      className="cursor-pointer hover:bg-blue-50 transition-colors"
+                      onClick={() => router.push(`/dashboard/users/${user._id}`)}
+                    >
+                      <td className="font-medium text-slate-900 hover:text-blue-700">{user.name}</td>
                       <td className="text-slate-600 text-sm">{user.email}</td>
                       <td className="text-slate-600 text-sm">{user.phone || '—'}</td>
                       <td>

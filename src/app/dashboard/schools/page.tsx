@@ -1,7 +1,8 @@
 'use client'
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
-import { Plus, Search, ChevronLeft, ChevronRight } from 'lucide-react'
+import Link from 'next/link'
+import { Plus, Search, ChevronLeft, ChevronRight, ChevronRight as ChevronRightIcon } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn } from '@/lib/utils'
 import type { ISchool } from '@/types'
@@ -160,7 +161,7 @@ export default function SchoolsPage() {
             {schools.map((school) => (
               <div
                 key={school._id}
-                className="bg-white rounded-lg border border-slate-200 p-4 hover:border-blue-200 transition-colors"
+                className="bg-white rounded-lg border border-slate-200 p-4 hover:border-blue-300 hover:shadow-sm transition-all"
               >
                 <h3 className="font-bold text-slate-900 mb-1">{school.name}</h3>
                 <p className="text-xs text-slate-500 mb-3">
@@ -214,6 +215,16 @@ export default function SchoolsPage() {
                     </div>
                     <div className="text-xs text-slate-500">Urgent</div>
                   </div>
+                </div>
+
+                {/* View details link */}
+                <div className="mt-3 pt-3 border-t border-slate-100">
+                  <Link
+                    href={`/dashboard/schools/${school._id}`}
+                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                  >
+                    View details →
+                  </Link>
                 </div>
               </div>
             ))}

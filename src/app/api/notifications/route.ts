@@ -11,19 +11,38 @@ export async function GET(req: NextRequest) {
 
   await connectDB()
 
-  const notifications = await Notification.find({
-    userId: new mongoose.Types.ObjectId(session.user.id),
-  })
-    .sort({ createdAt: -1 })
-    .limit(50)
-    .lean()
+  const searchParams = req.nextUrl.searchParams
+  const page   = Math.max(1, parseInt(searchParams.get('page')  || '1'))
+  const limit  = Math.min(50, parseInt(searchParams.get('limit') || '20'))
+  const unreadOnly = searchParams.get('unread') === 'true'
+  const skip   = (page - 1) * limit
 
-  const unreadCount = await Notification.countDocuments({
+  const filter: Record<string, any> = {
+    userId: new mongoose.Types.ObjectId(session.user.id),
+  }
+  if (unreadOnly) filter.isRead = false
+
+  const [notifications, total] = await Promise.all([
+    Notification.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(),
+    Notification.countDocuments(filter),
+  ])
+
+  const unreadCount = unreadOnly ? total : await Notification.countDocuments({
     userId: new mongoose.Types.ObjectId(session.user.id),
     isRead: false,
   })
 
-  return NextResponse.json({ notifications, unreadCount })
+  return NextResponse.json({
+    notifications,
+    unreadCount,
+    total,
+    page,
+    pages: Math.ceil(total / limit),
+  })
 }
 
 // Mark notifications as read
@@ -33,11 +52,16 @@ export async function PATCH(req: NextRequest) {
 
   await connectDB()
 
-  const { ids, markAll } = await req.json()
+  const { ids, markAll, notificationId } = await req.json()
 
   if (markAll) {
     await Notification.updateMany(
       { userId: new mongoose.Types.ObjectId(session.user.id), isRead: false },
+      { $set: { isRead: true } }
+    )
+  } else if (notificationId) {
+    await Notification.updateOne(
+      { _id: notificationId, userId: new mongoose.Types.ObjectId(session.user.id) },
       { $set: { isRead: true } }
     )
   } else if (Array.isArray(ids)) {

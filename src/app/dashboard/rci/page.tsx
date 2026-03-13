@@ -2,7 +2,8 @@
 import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
-import { Search, Filter, ChevronLeft, ChevronRight, CheckCircle, Clock } from 'lucide-react'
+import Link from 'next/link'
+import { Search, Filter, ChevronLeft, ChevronRight, CheckCircle, Clock, ExternalLink } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { cn, STATUS_LABELS, STATUS_COLORS, formatDate, formatDateTime } from '@/lib/utils'
 import type { IAssessment } from '@/types'
@@ -276,6 +277,15 @@ function RCIContent() {
                           </>
                         ) : (
                           <span className="text-slate-500">{rciStatus.replace(/_/g, ' ')}</span>
+                        )}
+                        {rciReport?._id && (
+                          <Link
+                            href={`/dashboard/rci/${rciReport._id}`}
+                            className="ml-2 text-indigo-600 hover:text-indigo-800 text-xs font-medium inline-flex items-center gap-0.5"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <ExternalLink size={12} /> Full Report
+                          </Link>
                         )}
                       </td>
                     </tr>
