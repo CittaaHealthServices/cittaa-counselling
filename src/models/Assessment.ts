@@ -53,6 +53,11 @@ const AssessmentSchema = new Schema<IAssessmentDoc>(
   { timestamps: true }
 )
 
+// Performance indexes
+AssessmentSchema.index({ requestId: 1 })
+AssessmentSchema.index({ requestedById: 1, status: 1 })          // psychologist's assessments
+AssessmentSchema.index({ status: 1, createdAt: -1 })              // admin list view
+
 const Assessment: Model<IAssessmentDoc> =
   mongoose.models.Assessment || mongoose.model<IAssessmentDoc>('Assessment', AssessmentSchema)
 

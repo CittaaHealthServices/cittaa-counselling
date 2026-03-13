@@ -36,6 +36,10 @@ const StudentSchema = new Schema<IStudentDoc>(
 
 // Compound index: roll number unique per school
 StudentSchema.index({ rollNumber: 1, schoolId: 1 }, { unique: true, sparse: true })
+// Performance indexes for 60k+ student queries
+StudentSchema.index({ schoolId: 1, isActive: 1, name: 1 })       // school student list + name search
+StudentSchema.index({ schoolId: 1, class: 1, section: 1 })        // class/section filter
+StudentSchema.index({ name: 'text' })                              // full-text search on name
 
 const Student: Model<IStudentDoc> =
   mongoose.models.Student || mongoose.model<IStudentDoc>('Student', StudentSchema)
