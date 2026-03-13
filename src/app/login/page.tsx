@@ -46,14 +46,14 @@ export default function LoginPage() {
             </div>
             <div>
               <div className="cittaa-brand text-white text-xl leading-none">Cittaa</div>
-              <div className="text-blue-200 text-xs">Mind Bridge</div>
+              <div className="text-purple-200 text-xs">Mind Bridge</div>
             </div>
           </div>
           <h1 className="text-4xl font-bold text-white leading-tight mb-4">
             School Counselling<br/>
             <span style={{ color: '#93c5fd' }}>Made Structured.</span>
           </h1>
-          <p className="text-blue-100 text-lg leading-relaxed">
+          <p className="text-purple-100 text-lg leading-relaxed">
             A secure, end-to-end platform for schools and Cittaa psychologists
             to manage student counselling requests, sessions, and assessments.
           </p>
@@ -67,9 +67,9 @@ export default function LoginPage() {
             { icon: Brain, label: 'RCI Coordination', desc: 'Field visits & reports' },
           ].map(({ icon: Icon, label, desc }) => (
             <div key={label} className="bg-white/10 rounded-xl p-4">
-              <Icon size={20} className="text-blue-200 mb-2" />
+              <Icon size={20} className="text-purple-200 mb-2" />
               <div className="text-white text-sm font-medium">{label}</div>
-              <div className="text-blue-200 text-xs mt-0.5">{desc}</div>
+              <div className="text-purple-200 text-xs mt-0.5">{desc}</div>
             </div>
           ))}
         </div>
@@ -81,7 +81,7 @@ export default function LoginPage() {
         <div className="w-full max-w-md">
           {/* Mobile logo */}
           <div className="flex items-center gap-3 mb-8 lg:hidden">
-            <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
+            <div className="w-9 h-9 bg-purple-600 rounded-xl flex items-center justify-center">
               <Brain size={20} className="text-white" />
             </div>
             <div>
@@ -107,7 +107,7 @@ export default function LoginPage() {
                   placeholder="you@school.edu.in"
                   className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3.5 py-2.5
                              text-white placeholder:text-slate-500 text-sm
-                             focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                             focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                 />
               </div>
 
@@ -117,7 +117,7 @@ export default function LoginPage() {
                     Password
                   </label>
                   <Link href="/forgot-password"
-                    className="text-xs text-blue-400 hover:text-blue-300 transition-colors">
+                    className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
                     Forgot password?
                   </Link>
                 </div>
@@ -130,7 +130,7 @@ export default function LoginPage() {
                     placeholder="Enter your password"
                     className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3.5 py-2.5 pr-11
                                text-white placeholder:text-slate-500 text-sm
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                   <button
                     type="button"
@@ -145,7 +145,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60
+                className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-60
                            text-white py-3 rounded-lg font-medium text-sm transition-colors
                            flex items-center justify-center gap-2"
               >
@@ -164,7 +164,7 @@ export default function LoginPage() {
             <div className="mt-6 pt-5 border-t border-slate-700">
               <p className="text-slate-500 text-xs text-center">
                 Access is provided by your school admin or Cittaa team.
-                <br/>Contact <span className="text-blue-400">support@cittaa.in</span> for help.
+                <br/>Contact <span className="text-purple-400">support@cittaa.in</span> for help.
               </p>
             </div>
           </div>

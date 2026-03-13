@@ -73,7 +73,7 @@ function RequestsContent() {
               className={cn(
                 'px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
                 status === s
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-purple-600 text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               )}
             >
@@ -112,14 +112,14 @@ function RequestsContent() {
       <div className="table-container">
         {loading ? (
           <div className="flex items-center justify-center h-48">
-            <div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-6 h-6 border-4 border-purple-500 border-t-transparent rounded-full" />
           </div>
         ) : requests.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-slate-400">
             <Filter size={32} className="mb-2 opacity-40" />
             <div className="text-sm">No requests found</div>
             {canCreate && (
-              <Link href="/dashboard/requests/new" className="mt-3 text-sm text-blue-600 hover:text-blue-800">
+              <Link href="/dashboard/requests/new" className="mt-3 text-sm text-purple-600 hover:text-purple-800">
                 Submit the first request →
               </Link>
             )}
@@ -169,7 +169,7 @@ function RequestsContent() {
                       <td>
                         <Link
                           href={`/dashboard/requests/${r._id}`}
-                          className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                          className="text-purple-600 hover:text-purple-800 text-xs font-medium"
                         >
                           View →
                         </Link>
@@ -213,7 +213,7 @@ function RequestsContent() {
 
 export default function RequestsPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-96"><div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" /></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-96"><div className="animate-spin w-6 h-6 border-4 border-purple-500 border-t-transparent rounded-full" /></div>}>
       <RequestsContent />
     </Suspense>
   )

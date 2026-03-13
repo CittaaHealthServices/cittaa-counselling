@@ -88,7 +88,7 @@ export default function StudentDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full" />
       </div>
     )
   }
@@ -97,7 +97,7 @@ export default function StudentDetailPage() {
     return (
       <div className="text-center py-20 text-slate-500">
         Student not found.{' '}
-        <Link href="/dashboard/students" className="text-blue-600 hover:underline">Back</Link>
+        <Link href="/dashboard/students" className="text-purple-600 hover:underline">Back</Link>
       </div>
     )
   }
@@ -115,7 +115,7 @@ export default function StudentDetailPage() {
         <div className="flex-1">
           <h1 className="text-xl font-semibold text-slate-900">{data.name}</h1>
           <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-500">
-            <Link href="/dashboard/students" className="hover:text-blue-600">Students</Link>
+            <Link href="/dashboard/students" className="hover:text-purple-600">Students</Link>
             <ChevronRight size={14} />
             <span>Class {data.class}{data.section ? ` – ${data.section}` : ''}</span>
           </div>
@@ -204,7 +204,7 @@ export default function StudentDetailPage() {
               {/* Student info card */}
               <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
                 <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-                  <User size={16} className="text-blue-600" /> Student Information
+                  <User size={16} className="text-purple-600" /> Student Information
                 </h2>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
@@ -297,22 +297,22 @@ export default function StudentDetailPage() {
           <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
             <div className="text-sm font-semibold text-slate-700 mb-3">Activity</div>
             <Link href={`/dashboard/requests?studentId=${id}`}
-              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 py-1.5">
+              className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 py-1.5">
               <FileText size={14} /> Counselling Requests
               <ChevronRight size={13} className="ml-auto" />
             </Link>
             <Link href={`/dashboard/sessions?studentId=${id}`}
-              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 py-1.5">
+              className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 py-1.5">
               <BookOpen size={14} /> Sessions
               <ChevronRight size={13} className="ml-auto" />
             </Link>
             <Link href={`/dashboard/observations?studentId=${id}`}
-              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 py-1.5">
+              className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 py-1.5">
               <Eye size={14} /> Observations
               <ChevronRight size={13} className="ml-auto" />
             </Link>
             <Link href={`/dashboard/assessments?studentId=${id}`}
-              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 py-1.5">
+              className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 py-1.5">
               <ClipboardList size={14} /> Assessments
               <ChevronRight size={13} className="ml-auto" />
             </Link>

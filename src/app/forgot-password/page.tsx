@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="flex items-center gap-3 mb-8">
-          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center">
+          <div className="w-9 h-9 bg-purple-600 rounded-xl flex items-center justify-center">
             <Brain size={20} className="text-white" />
           </div>
           <div>
@@ -58,7 +58,7 @@ export default function ForgotPasswordPage() {
                 you will receive a password reset link shortly. The link is valid for 1 hour.
               </p>
               <Link href="/login"
-                className="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 text-sm transition-colors">
+                className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 text-sm transition-colors">
                 <ArrowLeft size={14} />
                 Back to login
               </Link>
@@ -66,8 +66,8 @@ export default function ForgotPasswordPage() {
           ) : (
             <>
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-blue-900/40 rounded-xl flex items-center justify-center">
-                  <Mail size={20} className="text-blue-400" />
+                <div className="w-10 h-10 bg-purple-900/40 rounded-xl flex items-center justify-center">
+                  <Mail size={20} className="text-purple-400" />
                 </div>
                 <div>
                   <h2 className="text-xl font-bold text-white">Forgot password?</h2>
@@ -88,14 +88,14 @@ export default function ForgotPasswordPage() {
                     placeholder="you@school.edu.in"
                     className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3.5 py-2.5
                                text-white placeholder:text-slate-500 text-sm
-                               focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                               focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
                   />
                 </div>
 
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-blue-600 hover:bg-blue-700 disabled:opacity-60
+                  className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-60
                              text-white py-3 rounded-lg font-medium text-sm transition-colors
                              flex items-center justify-center gap-2"
                 >

@@ -83,7 +83,7 @@ export default function SchoolDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full" />
       </div>
     )
   }
@@ -92,7 +92,7 @@ export default function SchoolDetailPage() {
     return (
       <div className="text-center py-20 text-slate-500">
         School not found.{' '}
-        <Link href="/dashboard/schools" className="text-blue-600 hover:underline">Back</Link>
+        <Link href="/dashboard/schools" className="text-purple-600 hover:underline">Back</Link>
       </div>
     )
   }
@@ -108,7 +108,7 @@ export default function SchoolDetailPage() {
         <div className="flex-1">
           <h1 className="text-xl font-semibold text-slate-900">{data.name}</h1>
           <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-500">
-            <Link href="/dashboard/schools" className="hover:text-blue-600">Schools</Link>
+            <Link href="/dashboard/schools" className="hover:text-purple-600">Schools</Link>
             <ChevronRight size={14} />
             <span>{data.city}</span>
           </div>
@@ -133,7 +133,7 @@ export default function SchoolDetailPage() {
             /* Edit form */
             <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
               <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-                <School size={16} className="text-blue-600" /> Edit School Details
+                <School size={16} className="text-purple-600" /> Edit School Details
               </h2>
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2">
@@ -195,7 +195,7 @@ export default function SchoolDetailPage() {
             /* View mode */
             <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
               <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-                <School size={16} className="text-blue-600" /> School Information
+                <School size={16} className="text-purple-600" /> School Information
               </h2>
               <div className="grid grid-cols-2 gap-4 text-sm">
                 {data.principalName && (
@@ -244,17 +244,17 @@ export default function SchoolDetailPage() {
           <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-2">
             <div className="text-sm font-semibold text-slate-700 mb-3">Quick Links</div>
             <Link href={`/dashboard/students?schoolId=${id}`}
-              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 py-1.5">
+              className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 py-1.5">
               <Users size={14} /> View Students
               <ChevronRight size={13} className="ml-auto" />
             </Link>
             <Link href={`/dashboard/users?schoolId=${id}`}
-              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 py-1.5">
+              className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 py-1.5">
               <User size={14} /> View Staff
               <ChevronRight size={13} className="ml-auto" />
             </Link>
             <Link href={`/dashboard/sessions?schoolId=${id}`}
-              className="flex items-center gap-2 text-sm text-blue-600 hover:text-blue-700 py-1.5">
+              className="flex items-center gap-2 text-sm text-purple-600 hover:text-purple-700 py-1.5">
               <BookOpen size={14} /> View Sessions
               <ChevronRight size={13} className="ml-auto" />
             </Link>

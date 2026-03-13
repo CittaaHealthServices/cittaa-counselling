@@ -143,7 +143,7 @@ export default function SchoolsPage() {
       <div>
         {loading ? (
           <div className="flex items-center justify-center h-48">
-            <div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-6 h-6 border-4 border-purple-500 border-t-transparent rounded-full" />
           </div>
         ) : schools.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-slate-400">
@@ -151,7 +151,7 @@ export default function SchoolsPage() {
             <div className="text-sm">No schools found</div>
             <button
               onClick={() => setShowAddSchool(true)}
-              className="mt-3 text-sm text-blue-600 hover:text-blue-800"
+              className="mt-3 text-sm text-purple-600 hover:text-purple-800"
             >
               Add the first school →
             </button>
@@ -161,7 +161,7 @@ export default function SchoolsPage() {
             {schools.map((school) => (
               <div
                 key={school._id}
-                className="bg-white rounded-lg border border-slate-200 p-4 hover:border-blue-300 hover:shadow-sm transition-all"
+                className="bg-white rounded-lg border border-slate-200 p-4 hover:border-purple-300 hover:shadow-sm transition-all"
               >
                 <h3 className="font-bold text-slate-900 mb-1">{school.name}</h3>
                 <p className="text-xs text-slate-500 mb-3">
@@ -204,7 +204,7 @@ export default function SchoolsPage() {
                     <div className="text-xs text-slate-500">Total Cases</div>
                   </div>
                   <div className="stat-card">
-                    <div className="text-lg font-bold text-blue-600">
+                    <div className="text-lg font-bold text-purple-600">
                       {school.activeCases || 0}
                     </div>
                     <div className="text-xs text-slate-500">Active</div>
@@ -221,7 +221,7 @@ export default function SchoolsPage() {
                 <div className="mt-3 pt-3 border-t border-slate-100">
                   <Link
                     href={`/dashboard/schools/${school._id}`}
-                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                    className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 font-medium"
                   >
                     View details →
                   </Link>

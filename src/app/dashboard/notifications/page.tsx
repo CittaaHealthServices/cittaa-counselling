@@ -25,7 +25,7 @@ const TYPE_ICONS: Record<string, typeof Bell> = {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  NEW_REQUEST:         'bg-blue-100 text-blue-600',
+  NEW_REQUEST:         'bg-purple-100 text-purple-600',
   REQUEST_ASSIGNED:    'bg-indigo-100 text-indigo-600',
   REQUEST_APPROVED:    'bg-green-100 text-green-600',
   REQUEST_REJECTED:    'bg-red-100 text-red-600',
@@ -115,7 +115,7 @@ export default function NotificationsPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-xl font-semibold text-slate-900 flex items-center gap-2">
-            <Bell size={20} className="text-blue-600" />
+            <Bell size={20} className="text-purple-600" />
             Notifications
             {unreadCount > 0 && (
               <span className="ml-1 px-2 py-0.5 rounded-full bg-red-500 text-white text-xs font-bold">
@@ -132,7 +132,7 @@ export default function NotificationsPage() {
               onClick={() => { setFilter('all'); setPage(1) }}
               className={cn(
                 'px-3 py-1.5 text-sm font-medium transition-colors',
-                filter === 'all' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
+                filter === 'all' ? 'bg-purple-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
               )}
             >
               All
@@ -141,7 +141,7 @@ export default function NotificationsPage() {
               onClick={() => { setFilter('unread'); setPage(1) }}
               className={cn(
                 'px-3 py-1.5 text-sm font-medium transition-colors',
-                filter === 'unread' ? 'bg-blue-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
+                filter === 'unread' ? 'bg-purple-600 text-white' : 'bg-white text-slate-600 hover:bg-slate-50'
               )}
             >
               Unread
@@ -168,7 +168,7 @@ export default function NotificationsPage() {
       <div className="bg-white rounded-xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">
         {loading ? (
           <div className="flex items-center justify-center py-20">
-            <Loader2 size={24} className="animate-spin text-blue-500" />
+            <Loader2 size={24} className="animate-spin text-purple-500" />
           </div>
         ) : notifs.length === 0 ? (
           <div className="text-center py-20">
@@ -188,7 +188,7 @@ export default function NotificationsPage() {
                 className={cn(
                   'flex items-start gap-4 px-5 py-4 transition-colors',
                   notif.link ? 'cursor-pointer hover:bg-slate-50' : '',
-                  !notif.isRead ? 'bg-blue-50/40' : ''
+                  !notif.isRead ? 'bg-purple-50/40' : ''
                 )}
               >
                 {/* Icon */}
@@ -210,7 +210,7 @@ export default function NotificationsPage() {
                     {notif.message}
                   </p>
                   {notif.link && (
-                    <span className="inline-flex items-center gap-1 text-xs text-blue-600 mt-1">
+                    <span className="inline-flex items-center gap-1 text-xs text-purple-600 mt-1">
                       <ExternalLink size={11} /> View details
                     </span>
                   )}
@@ -218,7 +218,7 @@ export default function NotificationsPage() {
 
                 {/* Unread dot */}
                 {!notif.isRead && (
-                  <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-2" />
+                  <div className="w-2 h-2 rounded-full bg-purple-500 shrink-0 mt-2" />
                 )}
               </div>
             )

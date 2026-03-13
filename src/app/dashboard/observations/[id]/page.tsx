@@ -92,7 +92,7 @@ export default function ObservationDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full" />
       </div>
     )
   }
@@ -101,7 +101,7 @@ export default function ObservationDetailPage() {
     return (
       <div className="text-center py-20 text-slate-500">
         Observation not found.{' '}
-        <Link href="/dashboard/observations" className="text-blue-600 hover:underline">Back</Link>
+        <Link href="/dashboard/observations" className="text-purple-600 hover:underline">Back</Link>
       </div>
     )
   }
@@ -122,7 +122,7 @@ export default function ObservationDetailPage() {
         <div className="flex-1">
           <h1 className="text-xl font-semibold text-slate-900">Observation Detail</h1>
           <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-500">
-            <Link href="/dashboard/observations" className="hover:text-blue-600">Observations</Link>
+            <Link href="/dashboard/observations" className="hover:text-purple-600">Observations</Link>
             <ChevronRight size={14} />
             <span>{formatDate(data.observationDate || data.createdAt)}</span>
           </div>
@@ -141,7 +141,7 @@ export default function ObservationDetailPage() {
           {/* Observation content */}
           <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
             <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-              <Eye size={16} className="text-blue-600" /> Observation
+              <Eye size={16} className="text-purple-600" /> Observation
             </h2>
 
             {/* Category tags */}
@@ -149,7 +149,7 @@ export default function ObservationDetailPage() {
               <div className="flex flex-wrap gap-2">
                 {data.categories.map((cat: string) => (
                   <span key={cat}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-medium border border-blue-100">
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-medium border border-purple-100">
                     <Tag size={10} />
                     {BEHAVIOUR_LABELS[cat] || cat}
                   </span>
@@ -178,7 +178,7 @@ export default function ObservationDetailPage() {
               <div className="pt-3 border-t border-slate-100">
                 <div className="text-slate-400 text-xs font-medium mb-1">Linked Counselling Request</div>
                 <Link href={`/dashboard/requests/${request._id}`}
-                  className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  className="inline-flex items-center gap-1.5 text-purple-600 hover:text-purple-700 text-sm font-medium">
                   <FileText size={14} />
                   {request.requestNumber || 'View Request'}
                   <ChevronRight size={13} />
@@ -277,8 +277,8 @@ export default function ObservationDetailPage() {
           {/* Student */}
           <div className="bg-white rounded-xl border border-slate-200 p-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <User size={15} className="text-blue-600" />
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <User size={15} className="text-purple-600" />
               </div>
               <div className="text-sm font-semibold text-slate-700">Student</div>
             </div>

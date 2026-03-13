@@ -11,7 +11,7 @@ import toast from 'react-hot-toast'
 import { cn, formatDate } from '@/lib/utils'
 
 const STATUS_COLORS: Record<string, string> = {
-  SCHEDULED:   'bg-blue-100 text-blue-700',
+  SCHEDULED:   'bg-purple-100 text-purple-700',
   COMPLETED:   'bg-green-100 text-green-700',
   CANCELLED:   'bg-red-100 text-red-700',
   RESCHEDULED: 'bg-yellow-100 text-yellow-700',
@@ -83,7 +83,7 @@ export default function SessionDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full" />
       </div>
     )
   }
@@ -92,7 +92,7 @@ export default function SessionDetailPage() {
     return (
       <div className="text-center py-20 text-slate-500">
         Session not found.{' '}
-        <Link href="/dashboard/sessions" className="text-blue-600 hover:underline">Back to sessions</Link>
+        <Link href="/dashboard/sessions" className="text-purple-600 hover:underline">Back to sessions</Link>
       </div>
     )
   }
@@ -113,7 +113,7 @@ export default function SessionDetailPage() {
         <div className="flex-1">
           <h1 className="text-xl font-semibold text-slate-900">Session Detail</h1>
           <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-500">
-            <Link href="/dashboard/sessions" className="hover:text-blue-600">Sessions</Link>
+            <Link href="/dashboard/sessions" className="hover:text-purple-600">Sessions</Link>
             <ChevronRight size={14} />
             <span>{formatDate(data.scheduledAt)}</span>
           </div>
@@ -130,7 +130,7 @@ export default function SessionDetailPage() {
           {/* Core info card */}
           <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
             <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-              <Calendar size={16} className="text-blue-600" /> Session Information
+              <Calendar size={16} className="text-purple-600" /> Session Information
             </h2>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
@@ -157,7 +157,7 @@ export default function SessionDetailPage() {
               <div className="pt-3 border-t border-slate-100">
                 <div className="text-slate-400 text-xs font-medium mb-1">Linked Request</div>
                 <Link href={`/dashboard/requests/${request._id}`}
-                  className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  className="inline-flex items-center gap-1.5 text-purple-600 hover:text-purple-700 text-sm font-medium">
                   <FileText size={14} />
                   {request.requestNumber || 'View Request'}
                   <ChevronRight size={13} />
@@ -169,7 +169,7 @@ export default function SessionDetailPage() {
           {/* Session notes (editable for psychologist) */}
           <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
             <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-              <FileText size={16} className="text-blue-600" /> Session Notes
+              <FileText size={16} className="text-purple-600" /> Session Notes
             </h2>
             {canEdit ? (
               <textarea
@@ -195,7 +195,7 @@ export default function SessionDetailPage() {
                     className={cn(
                       'flex items-center gap-2 px-4 py-2 rounded-lg border text-sm font-medium transition-colors',
                       followUpRequired
-                        ? 'bg-blue-50 border-blue-300 text-blue-700'
+                        ? 'bg-purple-50 border-purple-300 text-purple-700'
                         : 'bg-white border-slate-300 text-slate-600 hover:bg-slate-50'
                     )}
                   >
@@ -261,8 +261,8 @@ export default function SessionDetailPage() {
           {/* Student */}
           <div className="bg-white rounded-xl border border-slate-200 p-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <User size={15} className="text-blue-600" />
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <User size={15} className="text-purple-600" />
               </div>
               <div className="text-sm font-semibold text-slate-700">Student</div>
             </div>
@@ -322,7 +322,7 @@ export default function SessionDetailPage() {
               {data.followUpRequired && data.nextSessionDate && (
                 <div className="flex justify-between">
                   <span>Next Session</span>
-                  <span className="font-medium text-blue-600">{formatDate(data.nextSessionDate)}</span>
+                  <span className="font-medium text-purple-600">{formatDate(data.nextSessionDate)}</span>
                 </div>
               )}
             </div>

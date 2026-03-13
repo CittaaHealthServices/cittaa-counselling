@@ -9,7 +9,7 @@ import type { IUser, ISchool } from '@/types'
 
 const ROLE_COLORS: Record<string, string> = {
   CITTAA_ADMIN: 'bg-red-100 text-red-700',
-  SCHOOL_PRINCIPAL: 'bg-blue-100 text-blue-700',
+  SCHOOL_PRINCIPAL: 'bg-purple-100 text-purple-700',
   COORDINATOR: 'bg-purple-100 text-purple-700',
   CLASS_TEACHER: 'bg-yellow-100 text-yellow-700',
   PSYCHOLOGIST: 'bg-green-100 text-green-700',
@@ -211,7 +211,7 @@ export default function UsersPage() {
       <div className="table-container">
         {loading ? (
           <div className="flex items-center justify-center h-48">
-            <div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-6 h-6 border-4 border-purple-500 border-t-transparent rounded-full" />
           </div>
         ) : users.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-slate-400">
@@ -220,7 +220,7 @@ export default function UsersPage() {
             {(isAdmin || isPrincipal) && (
               <button
                 onClick={() => setShowAddUser(true)}
-                className="mt-3 text-sm text-blue-600 hover:text-blue-800"
+                className="mt-3 text-sm text-purple-600 hover:text-purple-800"
               >
                 Add the first user →
               </button>
@@ -246,10 +246,10 @@ export default function UsersPage() {
                   return (
                     <tr
                       key={user._id}
-                      className="cursor-pointer hover:bg-blue-50 transition-colors"
+                      className="cursor-pointer hover:bg-purple-50 transition-colors"
                       onClick={() => router.push(`/dashboard/users/${user._id}`)}
                     >
-                      <td className="font-medium text-slate-900 hover:text-blue-700">{user.name}</td>
+                      <td className="font-medium text-slate-900 hover:text-purple-700">{user.name}</td>
                       <td className="text-slate-600 text-sm">{user.email}</td>
                       <td className="text-slate-600 text-sm">{user.phone || '—'}</td>
                       <td>

@@ -61,7 +61,7 @@ export function Sidebar({ onClose }: SidebarProps) {
       {/* Logo */}
       <div className="flex items-center justify-between px-5 h-16 border-b border-slate-200">
         <div className="flex items-center gap-2.5">
-          <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
             <Brain size={18} className="text-white" />
           </div>
           <div>
@@ -79,9 +79,9 @@ export function Sidebar({ onClose }: SidebarProps) {
       {/* School badge */}
       {session?.user?.schoolName && (
         <div className="px-4 py-3 border-b border-slate-100">
-          <div className="bg-blue-50 rounded-lg px-3 py-2">
-            <div className="text-xs text-blue-500 font-medium">School</div>
-            <div className="text-sm font-semibold text-blue-800 truncate">{session.user.schoolName}</div>
+          <div className="bg-purple-50 rounded-lg px-3 py-2">
+            <div className="text-xs text-purple-500 font-medium">School</div>
+            <div className="text-sm font-semibold text-purple-800 truncate">{session.user.schoolName}</div>
           </div>
         </div>
       )}

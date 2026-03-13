@@ -154,7 +154,7 @@ function RCIContent() {
               className={cn(
                 'px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
                 status === s
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-purple-600 text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               )}
             >
@@ -183,7 +183,7 @@ function RCIContent() {
       <div className="table-container">
         {loading ? (
           <div className="flex items-center justify-center h-48">
-            <div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-6 h-6 border-4 border-purple-500 border-t-transparent rounded-full" />
           </div>
         ) : assessments.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-slate-400">
@@ -229,7 +229,7 @@ function RCIContent() {
                             rciStatus === 'REPORT_SUBMITTED'
                               ? 'bg-green-100 text-green-800'
                               : rciStatus === 'VISITING'
-                                ? 'bg-blue-100 text-blue-800'
+                                ? 'bg-purple-100 text-purple-800'
                                 : rciStatus === 'VISIT_SCHEDULED'
                                   ? 'bg-purple-100 text-purple-800'
                                   : 'bg-yellow-100 text-yellow-800'
@@ -251,7 +251,7 @@ function RCIContent() {
                               <button
                                 onClick={() => handleStatusUpdate(assessment, 'VISIT_SCHEDULED')}
                                 disabled={actionLoading}
-                                className="text-blue-600 hover:text-blue-800 font-medium disabled:opacity-60"
+                                className="text-purple-600 hover:text-purple-800 font-medium disabled:opacity-60"
                               >
                                 Schedule Visit
                               </button>
@@ -386,7 +386,7 @@ function RCIContent() {
 
 export default function RCIPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-96"><div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" /></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-96"><div className="animate-spin w-6 h-6 border-4 border-purple-500 border-t-transparent rounded-full" /></div>}>
       <RCIContent />
     </Suspense>
   )

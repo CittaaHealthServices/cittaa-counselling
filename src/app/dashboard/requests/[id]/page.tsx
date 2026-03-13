@@ -159,7 +159,7 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64"><div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" /></div>
+    return <div className="flex items-center justify-center h-64"><div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full" /></div>
   }
   if (!data?.request) return <div className="text-center text-slate-500 py-20">Request not found</div>
 
@@ -249,7 +249,7 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
                       <div className="font-medium text-sm text-slate-900">{formatDateTime(s.scheduledAt)}</div>
                       <span className={cn('badge text-xs',
                         s.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
-                        s.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-700' :
+                        s.status === 'SCHEDULED' ? 'bg-purple-100 text-purple-700' :
                         'bg-red-100 text-red-700'
                       )}>{s.status}</span>
                     </div>
@@ -280,7 +280,7 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
                 <div key={a._id} className="border border-slate-200 rounded-lg p-4 mb-3">
                   <div className="flex items-center justify-between mb-2">
                     <div className="font-medium text-sm">{a.type}</div>
-                    <Link href={`/dashboard/assessments/${a._id}`} className="text-xs text-blue-600 hover:text-blue-800">View →</Link>
+                    <Link href={`/dashboard/assessments/${a._id}`} className="text-xs text-purple-600 hover:text-purple-800">View →</Link>
                   </div>
                   <div className="text-xs text-slate-500 mb-2">
                     Requested by {a.requestedById?.name} · {formatDateTime(a.createdAt)}
@@ -309,7 +309,7 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
                 {[...request.statusHistory].reverse().map((h: any, i: number) => (
                   <div key={i} className="flex gap-3">
                     <div className="flex flex-col items-center">
-                      <div className="w-2.5 h-2.5 rounded-full bg-blue-500 mt-1.5" />
+                      <div className="w-2.5 h-2.5 rounded-full bg-purple-500 mt-1.5" />
                       {i < request.statusHistory.length - 1 && <div className="w-0.5 flex-1 bg-slate-200 mt-1" />}
                     </div>
                     <div className="pb-3">
@@ -501,7 +501,7 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
             <textarea value={sessionReport} onChange={(e) => setSessionReport(e.target.value)} className="form-textarea" rows={5} placeholder="Summarise the session, student's state, key insights…" />
           </div>
           <div className="flex items-center gap-3">
-            <input type="checkbox" id="followup" checked={followUp} onChange={(e) => setFollowUp(e.target.checked)} className="w-4 h-4 accent-blue-600" />
+            <input type="checkbox" id="followup" checked={followUp} onChange={(e) => setFollowUp(e.target.checked)} className="w-4 h-4 accent-purple-600" />
             <label htmlFor="followup" className="text-sm text-slate-700">Follow-up session recommended</label>
           </div>
           <div className="flex gap-3">

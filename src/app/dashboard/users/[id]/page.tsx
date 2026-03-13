@@ -25,8 +25,8 @@ const ROLE_LABELS: Record<string, string> = {
 const ROLE_COLORS: Record<string, string> = {
   CITTAA_ADMIN:     'bg-purple-100 text-purple-700',
   CITTAA_SUPPORT:   'bg-purple-100 text-purple-700',
-  SCHOOL_PRINCIPAL: 'bg-blue-100 text-blue-700',
-  SCHOOL_ADMIN:     'bg-blue-100 text-blue-700',
+  SCHOOL_PRINCIPAL: 'bg-purple-100 text-purple-700',
+  SCHOOL_ADMIN:     'bg-purple-100 text-purple-700',
   CLASS_TEACHER:    'bg-green-100 text-green-700',
   COORDINATOR:      'bg-teal-100 text-teal-700',
   PSYCHOLOGIST:     'bg-indigo-100 text-indigo-700',
@@ -92,7 +92,7 @@ export default function UserDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full" />
       </div>
     )
   }
@@ -101,7 +101,7 @@ export default function UserDetailPage() {
     return (
       <div className="text-center py-20 text-slate-500">
         User not found.{' '}
-        <Link href="/dashboard/users" className="text-blue-600 hover:underline">Back</Link>
+        <Link href="/dashboard/users" className="text-purple-600 hover:underline">Back</Link>
       </div>
     )
   }
@@ -119,7 +119,7 @@ export default function UserDetailPage() {
         <div className="flex-1">
           <h1 className="text-xl font-semibold text-slate-900">{data.name}</h1>
           <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-500">
-            <Link href="/dashboard/users" className="hover:text-blue-600">Users</Link>
+            <Link href="/dashboard/users" className="hover:text-purple-600">Users</Link>
             <ChevronRight size={14} />
             <span>{data.email}</span>
           </div>
@@ -175,12 +175,12 @@ export default function UserDetailPage() {
           <div className="lg:col-span-2 space-y-5">
             <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
               <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-                <User size={16} className="text-blue-600" /> Profile
+                <User size={16} className="text-purple-600" /> Profile
               </h2>
 
               {/* Avatar + name */}
               <div className="flex items-center gap-4">
-                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-indigo-600 flex items-center justify-center text-white text-xl font-bold">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-indigo-600 flex items-center justify-center text-white text-xl font-bold">
                   {data.name?.charAt(0).toUpperCase() || 'U'}
                 </div>
                 <div>
@@ -243,7 +243,7 @@ export default function UserDetailPage() {
                 </div>
                 {school._id && (
                   <Link href={`/dashboard/schools/${school._id}`}
-                    className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline mt-2">
+                    className="inline-flex items-center gap-1 text-xs text-purple-600 hover:underline mt-2">
                     View school <ChevronRight size={12} />
                   </Link>
                 )}

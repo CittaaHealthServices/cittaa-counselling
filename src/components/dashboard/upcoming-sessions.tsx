@@ -45,15 +45,15 @@ export function UpcomingSessions() {
     <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100">
         <div className="flex items-center gap-2">
-          <Calendar size={17} className="text-blue-600" />
+          <Calendar size={17} className="text-purple-600" />
           <div className="font-semibold text-slate-900 text-sm">Upcoming Sessions</div>
           {sessions.length > 0 && (
-            <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">
+            <span className="bg-purple-100 text-purple-700 text-xs font-bold px-2 py-0.5 rounded-full">
               {sessions.length}
             </span>
           )}
         </div>
-        <Link href="/dashboard/sessions" className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1">
+        <Link href="/dashboard/sessions" className="text-xs text-purple-600 hover:text-purple-800 flex items-center gap-1">
           View all <ArrowRight size={12} />
         </Link>
       </div>
@@ -83,7 +83,7 @@ export function UpcomingSessions() {
                 {/* Time indicator */}
                 <div className={`
                   shrink-0 w-10 h-10 rounded-xl flex items-center justify-center text-center
-                  ${isToday ? 'bg-red-100 text-red-700' : isTomorrow ? 'bg-orange-100 text-orange-700' : 'bg-blue-50 text-blue-700'}
+                  ${isToday ? 'bg-red-100 text-red-700' : isTomorrow ? 'bg-orange-100 text-orange-700' : 'bg-purple-50 text-purple-700'}
                 `}>
                   <div>
                     <div className="text-xs font-bold leading-none">

@@ -41,7 +41,7 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full" />
       </div>
     )
   }
@@ -95,7 +95,7 @@ export default function DashboardPage() {
               <Eye size={17} className="text-indigo-600" />
               <span className="font-semibold text-slate-900">Classroom Observations</span>
             </div>
-            <Link href="/dashboard/observations" className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1">
+            <Link href="/dashboard/observations" className="text-xs text-purple-600 hover:text-purple-800 flex items-center gap-1">
               View all <ArrowRight size={12} />
             </Link>
           </div>
@@ -107,9 +107,9 @@ export default function DashboardPage() {
                 <div className="text-3xl font-bold text-slate-900">{obs.today ?? 0}</div>
                 <div className="text-xs text-slate-500 mt-1">Today</div>
               </div>
-              <div className="text-center bg-blue-50 rounded-xl p-4">
-                <div className="text-3xl font-bold text-blue-700">{obs.thisWeek ?? 0}</div>
-                <div className="text-xs text-blue-500 mt-1">This Week</div>
+              <div className="text-center bg-purple-50 rounded-xl p-4">
+                <div className="text-3xl font-bold text-purple-700">{obs.thisWeek ?? 0}</div>
+                <div className="text-xs text-purple-500 mt-1">This Week</div>
               </div>
               <div className="text-center bg-indigo-50 rounded-xl p-4">
                 <div className="text-3xl font-bold text-indigo-700">{obs.thisMonth ?? 0}</div>
@@ -143,7 +143,7 @@ export default function DashboardPage() {
                     <Link
                       key={`${c._id.class}-${c._id.section}`}
                       href={`/dashboard/observations?class=${c._id.class}`}
-                      className="bg-slate-50 hover:bg-blue-50 rounded-lg px-3 py-2.5 flex items-center justify-between transition-colors"
+                      className="bg-slate-50 hover:bg-purple-50 rounded-lg px-3 py-2.5 flex items-center justify-between transition-colors"
                     >
                       <div>
                         <div className="font-semibold text-sm text-slate-800">
@@ -167,7 +167,7 @@ export default function DashboardPage() {
                   ))}
                 </div>
                 {obs.classBreakdown.length > 9 && (
-                  <Link href="/dashboard/observations" className="text-xs text-blue-600 hover:text-blue-800 mt-2 inline-block">
+                  <Link href="/dashboard/observations" className="text-xs text-purple-600 hover:text-purple-800 mt-2 inline-block">
                     +{obs.classBreakdown.length - 9} more classes →
                   </Link>
                 )}
@@ -274,7 +274,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div className="font-semibold text-slate-900">School Coverage (Requests)</div>
-            <Link href="/dashboard/schools" className="text-sm text-blue-600 hover:text-blue-800 flex items-center gap-1">
+            <Link href="/dashboard/schools" className="text-sm text-purple-600 hover:text-purple-800 flex items-center gap-1">
               View all <ArrowRight size={13} />
             </Link>
           </div>
@@ -300,7 +300,7 @@ function StatCard({
   label: string; value: number; icon: any; color: string; href: string; badge?: string
 }) {
   const colorMap: Record<string, string> = {
-    blue:   'bg-blue-50   text-blue-600',
+    blue:   'bg-purple-50   text-purple-600',
     orange: 'bg-orange-50 text-orange-600',
     purple: 'bg-purple-50 text-purple-600',
     green:  'bg-green-50  text-green-600',

@@ -265,7 +265,7 @@ export default function ObservationsPage() {
                 <StatCard label="Total Observations"  value={stats.total}        color="bg-slate-50 border-slate-200 text-slate-700" />
                 <StatCard label="Awaiting Review"     value={stats.shared}       color="bg-yellow-50 border-yellow-200 text-yellow-800" />
                 <StatCard label="Escalated → Request" value={stats.escalated}    color="bg-green-50 border-green-200 text-green-800" />
-                <StatCard label="Acknowledged"        value={stats.acknowledged} color="bg-blue-50 border-blue-200 text-blue-800" />
+                <StatCard label="Acknowledged"        value={stats.acknowledged} color="bg-purple-50 border-purple-200 text-purple-800" />
                 <StatCard label="Declined"            value={stats.declined}     color="bg-red-50 border-red-200 text-red-800" />
                 <StatCard label="Drafts"              value={stats.draft}        color="bg-slate-50 border-slate-200 text-slate-500" />
               </div>
@@ -274,7 +274,7 @@ export default function ObservationsPage() {
               {stats.perPsychologist?.length > 0 && (
                 <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                   <div className="flex items-center gap-2 px-5 py-3.5 border-b border-slate-100">
-                    <BarChart2 size={16} className="text-blue-600" />
+                    <BarChart2 size={16} className="text-purple-600" />
                     <span className="font-semibold text-sm text-slate-900">Observations by Psychologist</span>
                   </div>
                   <div className="overflow-x-auto">
@@ -295,7 +295,7 @@ export default function ObservationsPage() {
                           <tr key={p._id}>
                             <td>
                               <div className="flex items-center gap-2">
-                                <div className="w-7 h-7 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-blue-700">
+                                <div className="w-7 h-7 bg-purple-100 rounded-full flex items-center justify-center text-xs font-bold text-purple-700">
                                   {(p.psychologistName || '?')[0]}
                                 </div>
                                 <div>
@@ -339,7 +339,7 @@ export default function ObservationsPage() {
           {['ALL', 'DRAFT', 'SHARED', 'ACKNOWLEDGED', 'ESCALATED', 'DECLINED'].map((s) => (
             <button key={s} onClick={() => { setStatus(s); setPage(1) }}
               className={cn('px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
-                statusFilter === s ? 'bg-blue-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}>
+                statusFilter === s ? 'bg-purple-600 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200')}>
               {s === 'ALL' ? 'All' : STATUS_LABELS[s]}
             </button>
           ))}
@@ -361,14 +361,14 @@ export default function ObservationsPage() {
       <div className="table-container">
         {loading ? (
           <div className="flex items-center justify-center h-48">
-            <div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-6 h-6 border-4 border-purple-500 border-t-transparent rounded-full" />
           </div>
         ) : observations.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-slate-400 text-sm">
             <Eye size={28} className="mb-2 opacity-40" />
             No observations found
             {canCreate && (
-              <button onClick={() => setShowNew(true)} className="mt-3 text-blue-600 hover:text-blue-800">
+              <button onClick={() => setShowNew(true)} className="mt-3 text-purple-600 hover:text-purple-800">
                 Record your first observation →
               </button>
             )}
@@ -407,7 +407,7 @@ export default function ObservationsPage() {
                       <td>
                         <div className="flex flex-wrap gap-1">
                           {(obs.behaviourFlags || []).slice(0, 2).map((f: string) => (
-                            <span key={f} className="text-xs bg-blue-50 text-blue-600 px-2 py-0.5 rounded-full">{f}</span>
+                            <span key={f} className="text-xs bg-purple-50 text-purple-600 px-2 py-0.5 rounded-full">{f}</span>
                           ))}
                           {obs.behaviourFlags?.length > 2 && (
                             <span className="text-xs text-slate-400">+{obs.behaviourFlags.length - 2}</span>
@@ -432,7 +432,7 @@ export default function ObservationsPage() {
                       <td>
                         <div className="flex gap-2 items-center">
                           <Link href={`/dashboard/observations/${obs._id}`}
-                            className="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                            className="text-xs text-purple-600 hover:text-purple-800 font-medium">
                             View
                           </Link>
                           {isPending && obs.sharedWithId?._id === session?.user?.id && (
@@ -504,13 +504,13 @@ export default function ObservationsPage() {
               <button
                 onClick={() => { setUseManual(false); setNewObs(p => ({ ...p, manualStudentName: '', manualStudentClass: '', manualStudentSection: '' })) }}
                 className={cn('flex-1 py-2 font-medium transition-colors',
-                  !useManual ? 'bg-blue-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50')}>
+                  !useManual ? 'bg-purple-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50')}>
                 Search Student
               </button>
               <button
                 onClick={() => { setUseManual(true); setSelStudent(null); setNewObs(p => ({ ...p, studentId: '' })) }}
                 className={cn('flex-1 py-2 font-medium transition-colors',
-                  useManual ? 'bg-blue-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50')}>
+                  useManual ? 'bg-purple-600 text-white' : 'bg-white text-slate-500 hover:bg-slate-50')}>
                 Enter Manually
               </button>
             </div>
@@ -546,8 +546,8 @@ export default function ObservationsPage() {
                             setStSearch(`${s.name} — Class ${s.class}${s.section ? ` ${s.section}` : ''}`)
                           }}
                           className={cn(
-                            'w-full text-left px-3 py-2.5 hover:bg-blue-50 border-b border-slate-50 last:border-b-0',
-                            newObs.studentId === s._id && 'bg-blue-50',
+                            'w-full text-left px-3 py-2.5 hover:bg-purple-50 border-b border-slate-50 last:border-b-0',
+                            newObs.studentId === s._id && 'bg-purple-50',
                           )}>
                           <div className="text-sm font-medium">{s.name}</div>
                           <div className="text-xs text-slate-400">
@@ -559,12 +559,12 @@ export default function ObservationsPage() {
                 )}
 
                 {selectedStudent && (
-                  <div className="mt-2 flex items-center gap-2 bg-blue-50 rounded-lg px-3 py-2 text-sm">
-                    <User2 size={14} className="text-blue-600 shrink-0" />
-                    <span className="font-medium text-blue-800">{selectedStudent.name}</span>
-                    <span className="text-blue-500">· Class {selectedStudent.class}{selectedStudent.section ? ` ${selectedStudent.section}` : ''}</span>
+                  <div className="mt-2 flex items-center gap-2 bg-purple-50 rounded-lg px-3 py-2 text-sm">
+                    <User2 size={14} className="text-purple-600 shrink-0" />
+                    <span className="font-medium text-purple-800">{selectedStudent.name}</span>
+                    <span className="text-purple-500">· Class {selectedStudent.class}{selectedStudent.section ? ` ${selectedStudent.section}` : ''}</span>
                     <button onClick={() => { setSelStudent(null); setNewObs(p => ({ ...p, studentId: '' })); setStSearch('') }}
-                      className="ml-auto text-blue-400 hover:text-blue-600 text-xs">✕</button>
+                      className="ml-auto text-purple-400 hover:text-purple-600 text-xs">✕</button>
                   </div>
                 )}
               </div>
@@ -628,8 +628,8 @@ export default function ObservationsPage() {
                     }))}
                     className={cn('px-2.5 py-1 rounded-full text-xs font-medium border transition-colors',
                       newObs.behaviourFlags.includes(f)
-                        ? 'bg-blue-600 text-white border-blue-600'
-                        : 'bg-white text-slate-600 border-slate-300 hover:border-blue-400')}>
+                        ? 'bg-purple-600 text-white border-purple-600'
+                        : 'bg-white text-slate-600 border-slate-300 hover:border-purple-400')}>
                     {f}
                   </button>
                 ))}
@@ -700,7 +700,7 @@ export default function ObservationsPage() {
               {reviewing.behaviourFlags?.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-1.5">
                   {reviewing.behaviourFlags.map((f: string) => (
-                    <span key={f} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{f}</span>
+                    <span key={f} className="text-xs bg-purple-50 text-purple-700 px-2 py-0.5 rounded-full">{f}</span>
                   ))}
                 </div>
               )}
@@ -722,7 +722,7 @@ export default function ObservationsPage() {
                   <button key={p} type="button" onClick={() => setEscPri(p)}
                     className={cn('py-2 rounded-lg border-2 text-xs font-semibold transition-colors',
                       escalatePriority === p
-                        ? 'border-blue-500 bg-blue-50 text-blue-700'
+                        ? 'border-purple-500 bg-purple-50 text-purple-700'
                         : 'border-slate-200 text-slate-500 hover:border-slate-300')}>
                     {p}
                   </button>

@@ -230,7 +230,7 @@ export default function StudentsPage() {
       <div className="table-container">
         {loading ? (
           <div className="flex items-center justify-center h-48">
-            <div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-6 h-6 border-4 border-purple-500 border-t-transparent rounded-full" />
           </div>
         ) : students.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-slate-400">
@@ -239,14 +239,14 @@ export default function StudentsPage() {
             <div className="mt-3 flex gap-2">
               <button
                 onClick={() => setShowAddStudent(true)}
-                className="text-sm text-blue-600 hover:text-blue-800"
+                className="text-sm text-purple-600 hover:text-purple-800"
               >
                 Add a student →
               </button>
               <span className="text-xs text-slate-400">or</span>
               <button
                 onClick={() => setShowBulkImport(true)}
-                className="text-sm text-blue-600 hover:text-blue-800"
+                className="text-sm text-purple-600 hover:text-purple-800"
               >
                 Import CSV →
               </button>
@@ -271,10 +271,10 @@ export default function StudentsPage() {
                 {students.map((student) => (
                   <tr
                     key={student._id}
-                    className="cursor-pointer hover:bg-blue-50 transition-colors"
+                    className="cursor-pointer hover:bg-purple-50 transition-colors"
                     onClick={() => router.push(`/dashboard/students/${student._id}`)}
                   >
-                    <td className="font-medium text-slate-900 hover:text-blue-700">{student.name}</td>
+                    <td className="font-medium text-slate-900 hover:text-purple-700">{student.name}</td>
                     <td className="text-slate-600 text-sm">{student.rollNumber || '—'}</td>
                     <td className="text-slate-600 text-sm">
                       {student.class}

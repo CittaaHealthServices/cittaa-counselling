@@ -14,7 +14,7 @@ const STATUS_COLORS: Record<string, string> = {
   PENDING_APPROVAL: 'bg-yellow-100 text-yellow-700',
   APPROVED:         'bg-green-100 text-green-700',
   REJECTED:         'bg-red-100 text-red-700',
-  IN_PROGRESS:      'bg-blue-100 text-blue-700',
+  IN_PROGRESS:      'bg-purple-100 text-purple-700',
   COMPLETED:        'bg-slate-100 text-slate-700',
 }
 
@@ -102,7 +102,7 @@ export default function AssessmentDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full" />
       </div>
     )
   }
@@ -111,7 +111,7 @@ export default function AssessmentDetailPage() {
     return (
       <div className="text-center py-20 text-slate-500">
         Assessment not found.{' '}
-        <Link href="/dashboard/assessments" className="text-blue-600 hover:underline">Back</Link>
+        <Link href="/dashboard/assessments" className="text-purple-600 hover:underline">Back</Link>
       </div>
     )
   }
@@ -132,7 +132,7 @@ export default function AssessmentDetailPage() {
         <div className="flex-1">
           <h1 className="text-xl font-semibold text-slate-900">Assessment Detail</h1>
           <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-500">
-            <Link href="/dashboard/assessments" className="hover:text-blue-600">Assessments</Link>
+            <Link href="/dashboard/assessments" className="hover:text-purple-600">Assessments</Link>
             <ChevronRight size={14} />
             <span>{data.requestNumber}</span>
           </div>
@@ -149,7 +149,7 @@ export default function AssessmentDetailPage() {
           {/* Core details */}
           <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
             <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-              <ClipboardList size={16} className="text-blue-600" /> Assessment Details
+              <ClipboardList size={16} className="text-purple-600" /> Assessment Details
             </h2>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
@@ -172,7 +172,7 @@ export default function AssessmentDetailPage() {
               <div className="pt-3 border-t border-slate-100">
                 <div className="text-slate-400 text-xs font-medium mb-1">Linked Counselling Request</div>
                 <Link href={`/dashboard/requests/${request._id}`}
-                  className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                  className="inline-flex items-center gap-1.5 text-purple-600 hover:text-purple-700 text-sm font-medium">
                   <FileText size={14} />
                   {request.requestNumber || 'View Request'}
                   <ChevronRight size={13} />
@@ -273,8 +273,8 @@ export default function AssessmentDetailPage() {
         <div className="space-y-4">
           <div className="bg-white rounded-xl border border-slate-200 p-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <User size={15} className="text-blue-600" />
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <User size={15} className="text-purple-600" />
               </div>
               <div className="text-sm font-semibold text-slate-700">Student</div>
             </div>

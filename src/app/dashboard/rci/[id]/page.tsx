@@ -13,7 +13,7 @@ import { cn, formatDate } from '@/lib/utils'
 
 const STATUS_COLORS: Record<string, string> = {
   NOTIFIED:         'bg-yellow-100 text-yellow-700',
-  VISIT_SCHEDULED:  'bg-blue-100 text-blue-700',
+  VISIT_SCHEDULED:  'bg-purple-100 text-purple-700',
   VISITING:         'bg-indigo-100 text-indigo-700',
   REPORT_SUBMITTED: 'bg-green-100 text-green-700',
   CLOSED:           'bg-slate-100 text-slate-700',
@@ -91,7 +91,7 @@ export default function RCIDetailPage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full" />
       </div>
     )
   }
@@ -100,7 +100,7 @@ export default function RCIDetailPage() {
     return (
       <div className="text-center py-20 text-slate-500">
         RCI report not found.{' '}
-        <Link href="/dashboard/rci" className="text-blue-600 hover:underline">Back</Link>
+        <Link href="/dashboard/rci" className="text-purple-600 hover:underline">Back</Link>
       </div>
     )
   }
@@ -123,7 +123,7 @@ export default function RCIDetailPage() {
         <div className="flex-1">
           <h1 className="text-xl font-semibold text-slate-900">RCI Report</h1>
           <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-500">
-            <Link href="/dashboard/rci" className="hover:text-blue-600">RCI Reports</Link>
+            <Link href="/dashboard/rci" className="hover:text-purple-600">RCI Reports</Link>
             <ChevronRight size={14} />
             <span className="font-mono">{data.reportNumber || id}</span>
           </div>
@@ -143,7 +143,7 @@ export default function RCIDetailPage() {
                 idx < currentStepIdx
                   ? 'bg-green-500 border-green-500 text-white'
                   : idx === currentStepIdx
-                    ? 'bg-blue-600 border-blue-600 text-white'
+                    ? 'bg-purple-600 border-purple-600 text-white'
                     : 'bg-white border-slate-300 text-slate-400'
               )}>
                 {idx < currentStepIdx ? <CheckCircle2 size={14} /> : idx + 1}
@@ -203,7 +203,7 @@ export default function RCIDetailPage() {
           {canEdit ? (
             <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
               <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-                <Calendar size={16} className="text-blue-600" /> Visit & Report Details
+                <Calendar size={16} className="text-purple-600" /> Visit & Report Details
               </h2>
 
               <div className="grid grid-cols-2 gap-4">
@@ -281,7 +281,7 @@ export default function RCIDetailPage() {
             /* Read-only view */
             <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
               <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-                <FileText size={16} className="text-blue-600" /> Report Details
+                <FileText size={16} className="text-purple-600" /> Report Details
               </h2>
               {data.visitDate && (
                 <div>
@@ -305,7 +305,7 @@ export default function RCIDetailPage() {
                 <div>
                   <div className="text-slate-400 text-xs font-medium mb-1">Report Document</div>
                   <a href={data.reportUrl} target="_blank" rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    className="inline-flex items-center gap-1.5 text-purple-600 hover:text-purple-700 text-sm font-medium">
                     View Report <ExternalLink size={13} />
                   </a>
                 </div>
@@ -322,8 +322,8 @@ export default function RCIDetailPage() {
           {/* Student */}
           <div className="bg-white rounded-xl border border-slate-200 p-4">
             <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                <User size={15} className="text-blue-600" />
+              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                <User size={15} className="text-purple-600" />
               </div>
               <div className="text-sm font-semibold text-slate-700">Student</div>
             </div>
@@ -383,7 +383,7 @@ export default function RCIDetailPage() {
               {data.visitDate && (
                 <div className="flex justify-between">
                   <span>Visit Date</span>
-                  <span className="text-blue-600">{formatDate(data.visitDate)}</span>
+                  <span className="text-purple-600">{formatDate(data.visitDate)}</span>
                 </div>
               )}
               {data.submittedAt && (

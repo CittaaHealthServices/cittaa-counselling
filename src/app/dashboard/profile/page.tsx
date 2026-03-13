@@ -7,7 +7,7 @@ import { ROLE_LABELS, cn } from '@/lib/utils'
 
 const ROLE_COLORS: Record<string, string> = {
   CITTAA_ADMIN: 'bg-red-100 text-red-700',
-  SCHOOL_PRINCIPAL: 'bg-blue-100 text-blue-700',
+  SCHOOL_PRINCIPAL: 'bg-purple-100 text-purple-700',
   COORDINATOR: 'bg-purple-100 text-purple-700',
   CLASS_TEACHER: 'bg-yellow-100 text-yellow-700',
   PSYCHOLOGIST: 'bg-green-100 text-green-700',
@@ -146,7 +146,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" />
+        <div className="animate-spin w-6 h-6 border-4 border-purple-500 border-t-transparent rounded-full" />
       </div>
     )
   }
@@ -165,7 +165,7 @@ export default function ProfilePage() {
       <div className="bg-white rounded-xl border border-slate-200 p-6">
         <div className="flex items-start justify-between mb-6">
           <div className="flex items-start gap-4">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-purple-400 to-purple-600 flex items-center justify-center">
               <User size={32} className="text-white" />
             </div>
             <div>

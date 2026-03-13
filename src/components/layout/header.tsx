@@ -112,7 +112,7 @@ export function Header({ onMenuClick, title }: HeaderProps) {
               <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100">
                 <div className="font-semibold text-sm text-slate-900">Notifications</div>
                 {unread > 0 && (
-                  <button onClick={markAllRead} className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1">
+                  <button onClick={markAllRead} className="text-xs text-purple-600 hover:text-purple-800 flex items-center gap-1">
                     <CheckCheck size={13} /> Mark all read
                   </button>
                 )}
@@ -126,10 +126,10 @@ export function Header({ onMenuClick, title }: HeaderProps) {
                       key={n._id}
                       onClick={() => handleNotifClick(n)}
                       className={`w-full text-left px-4 py-3 border-b border-slate-50 hover:bg-slate-50 transition-colors
-                                  ${!n.isRead ? 'bg-blue-50/50' : ''}`}
+                                  ${!n.isRead ? 'bg-purple-50/50' : ''}`}
                     >
                       <div className="flex items-start gap-2">
-                        {!n.isRead && <div className="w-2 h-2 mt-1 rounded-full bg-blue-500 shrink-0" />}
+                        {!n.isRead && <div className="w-2 h-2 mt-1 rounded-full bg-purple-500 shrink-0" />}
                         <div className={!n.isRead ? '' : 'ml-4'}>
                           <div className="text-sm font-medium text-slate-900">{n.title}</div>
                           <div className="text-xs text-slate-500 mt-0.5 line-clamp-2">{n.message}</div>
@@ -145,7 +145,7 @@ export function Header({ onMenuClick, title }: HeaderProps) {
         </div>
 
         {/* User avatar */}
-        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center text-xs font-bold text-blue-700">
+        <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-xs font-bold text-purple-700">
           {session?.user?.name?.[0]?.toUpperCase()}
         </div>
       </div>

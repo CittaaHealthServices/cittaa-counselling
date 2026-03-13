@@ -58,7 +58,7 @@ function SessionsContent() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'SCHEDULED':
-        return 'bg-blue-100 text-blue-800'
+        return 'bg-purple-100 text-purple-800'
       case 'COMPLETED':
         return 'bg-green-100 text-green-800'
       case 'CANCELLED':
@@ -98,7 +98,7 @@ function SessionsContent() {
               className={cn(
                 'px-3 py-1.5 rounded-full text-xs font-medium transition-colors',
                 status === s
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-purple-600 text-white'
                   : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
               )}
             >
@@ -127,7 +127,7 @@ function SessionsContent() {
       <div className="table-container">
         {loading ? (
           <div className="flex items-center justify-center h-48">
-            <div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" />
+            <div className="animate-spin w-6 h-6 border-4 border-purple-500 border-t-transparent rounded-full" />
           </div>
         ) : sessions.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-48 text-slate-400">
@@ -155,7 +155,7 @@ function SessionsContent() {
                   const psychologist = sess.psychologist as any
 
                   return (
-                    <tr key={sess._id} className={isUpcoming(sess.scheduledAt) && sess.status === 'SCHEDULED' ? 'bg-blue-50' : ''}>
+                    <tr key={sess._id} className={isUpcoming(sess.scheduledAt) && sess.status === 'SCHEDULED' ? 'bg-purple-50' : ''}>
                       <td>
                         <div className="font-medium text-slate-900 flex items-center gap-2">
                           <Calendar size={14} className="text-slate-400" />
@@ -187,7 +187,7 @@ function SessionsContent() {
                       <td>
                         <Link
                           href={`/dashboard/requests/${request?._id}`}
-                          className="text-blue-600 hover:text-blue-800 text-xs font-medium"
+                          className="text-purple-600 hover:text-purple-800 text-xs font-medium"
                         >
                           View →
                         </Link>
@@ -231,7 +231,7 @@ function SessionsContent() {
 
 export default function SessionsPage() {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center h-96"><div className="animate-spin w-6 h-6 border-4 border-blue-500 border-t-transparent rounded-full" /></div>}>
+    <Suspense fallback={<div className="flex items-center justify-center h-96"><div className="animate-spin w-6 h-6 border-4 border-purple-500 border-t-transparent rounded-full" /></div>}>
       <SessionsContent />
     </Suspense>
   )

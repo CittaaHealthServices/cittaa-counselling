@@ -109,8 +109,8 @@ export default function NewRequestPage() {
                     setStudentSearch(`${s.name} — Class ${s.class}${s.section ? ` ${s.section}` : ''}`)
                     setStudents([])
                   }}
-                  className={`w-full text-left px-4 py-2.5 hover:bg-blue-50 transition-colors border-b border-slate-100 last:border-b-0
-                    ${form.studentId === s._id ? 'bg-blue-50' : ''}`}
+                  className={`w-full text-left px-4 py-2.5 hover:bg-purple-50 transition-colors border-b border-slate-100 last:border-b-0
+                    ${form.studentId === s._id ? 'bg-purple-50' : ''}`}
                 >
                   <div className="font-medium text-sm text-slate-900">{s.name}</div>
                   <div className="text-xs text-slate-400">
@@ -169,13 +169,13 @@ export default function NewRequestPage() {
             {(['LOW', 'MEDIUM', 'HIGH', 'URGENT'] as const).map((p) => {
               const colorMap = {
                 LOW:    'border-slate-300 text-slate-600 bg-slate-50',
-                MEDIUM: 'border-blue-300 text-blue-700 bg-blue-50',
+                MEDIUM: 'border-purple-300 text-purple-700 bg-purple-50',
                 HIGH:   'border-orange-300 text-orange-700 bg-orange-50',
                 URGENT: 'border-red-300 text-red-700 bg-red-50',
               }
               const selectedMap = {
                 LOW:    'border-slate-500 bg-slate-100',
-                MEDIUM: 'border-blue-500 bg-blue-100',
+                MEDIUM: 'border-purple-500 bg-purple-100',
                 HIGH:   'border-orange-500 bg-orange-100',
                 URGENT: 'border-red-500 bg-red-100',
               }
@@ -206,7 +206,7 @@ export default function NewRequestPage() {
             id="confidential"
             checked={form.isConfidential}
             onChange={(e) => setForm({ ...form, isConfidential: e.target.checked })}
-            className="w-4 h-4 accent-blue-600"
+            className="w-4 h-4 accent-purple-600"
           />
           <label htmlFor="confidential" className="text-sm text-slate-700 cursor-pointer">
             Mark as confidential
