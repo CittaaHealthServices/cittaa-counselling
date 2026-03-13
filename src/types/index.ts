@@ -85,7 +85,7 @@ export interface IUser {
   email: string
   role: Role
   phone?: string
-  schoolId?: string
+  schoolId?: string | ISchool
   isActive: boolean
   isAvailable: boolean
   createdAt: string
@@ -118,7 +118,9 @@ export interface IStudent {
   gender?: string
   parentName?: string
   parentPhone?: string
+  parentEmail?: string
   schoolId: string | ISchool
+  isActive?: boolean
 }
 
 export interface IRequest {
