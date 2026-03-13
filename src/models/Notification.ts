@@ -23,7 +23,7 @@ const NotificationSchema = new Schema<INotificationDoc>(
     link:      { type: String },
     relatedId: { type: String },
   },
-  { timestamps: true, updatedAt: false }
+  { timestamps: { createdAt: true, updatedAt: false } }
 )
 
 NotificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 })
