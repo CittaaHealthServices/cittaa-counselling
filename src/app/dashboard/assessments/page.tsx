@@ -7,6 +7,8 @@ import toast from 'react-hot-toast'
 import { cn, STATUS_LABELS, STATUS_COLORS, formatDate } from '@/lib/utils'
 import type { IAssessment } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 const STATUSES = ['ALL', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'IN_PROGRESS', 'COMPLETED']
 
 function AssessmentsContent() {

@@ -7,6 +7,8 @@ import toast from 'react-hot-toast'
 import { cn, STATUS_LABELS, STATUS_COLORS, formatDate, formatDateTime } from '@/lib/utils'
 import type { IAssessment } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 const RCI_STATUSES = ['ALL', 'NOTIFIED', 'VISIT_SCHEDULED', 'VISITING', 'REPORT_SUBMITTED']
 
 function RCIContent() {

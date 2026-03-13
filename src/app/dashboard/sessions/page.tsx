@@ -7,6 +7,8 @@ import { Search, Filter, ChevronLeft, ChevronRight, Calendar, User, MapPin } fro
 import { cn, STATUS_LABELS, STATUS_COLORS, formatDateTime, formatDate } from '@/lib/utils'
 import type { ISession } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 const SESSION_STATUSES = ['ALL', 'SCHEDULED', 'COMPLETED', 'CANCELLED']
 
 function SessionsContent() {

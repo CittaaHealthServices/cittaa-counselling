@@ -7,6 +7,8 @@ import { Plus, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn, STATUS_LABELS, STATUS_COLORS, PRIORITY_COLORS, PRIORITY_DOT, formatDate } from '@/lib/utils'
 import type { IRequest } from '@/types'
 
+export const dynamic = 'force-dynamic'
+
 const STATUSES = ['ALL', 'PENDING_APPROVAL', 'APPROVED', 'PSYCHOLOGIST_ASSIGNED', 'SESSION_SCHEDULED',
   'SESSION_COMPLETED', 'ASSESSMENT_REQUESTED', 'ASSESSMENT_APPROVED', 'RCI_NOTIFIED',
   'RCI_VISITING', 'RCI_REPORT_SUBMITTED', 'CLOSED', 'REJECTED']
