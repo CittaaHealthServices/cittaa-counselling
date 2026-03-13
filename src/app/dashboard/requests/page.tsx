@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, Suspense } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Plus, Search, Filter, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Search, Filter, ChevronLeft, ChevronRight, Lock } from 'lucide-react'
 import { cn, STATUS_LABELS, STATUS_COLORS, PRIORITY_COLORS, PRIORITY_DOT, formatDate } from '@/lib/utils'
 import type { IRequest } from '@/types'
 
@@ -141,13 +141,20 @@ function RequestsContent() {
               </thead>
               <tbody>
                 {requests.map((r) => {
-                  const student = r.student as any
-                  const school  = r.school as any
+                  const student = (r as any).studentId as any
+                  const school  = (r as any).schoolId  as any
                   return (
                     <tr key={r._id}>
                       <td className="font-mono text-xs text-slate-600">{r.requestNumber}</td>
                       <td>
-                        <div className="font-medium text-slate-900">{student?.name}</div>
+                        <div className="flex items-center gap-1.5 font-medium text-slate-900">
+                          {student?.name}
+                          {r.isConfidential && student?._isAnonymised && (
+                            <span title="Student identity protected" className="inline-flex items-center gap-0.5 text-xs text-slate-400">
+                              <Lock size={11} />
+                            </span>
+                          )}
+                        </div>
                         <div className="text-xs text-slate-400">{student?.class}{student?.section ? ` – ${student.section}` : ''}</div>
                       </td>
                       <td className="text-slate-600 max-w-40">
@@ -164,7 +171,15 @@ function RequestsContent() {
                           {STATUS_LABELS[r.status] || r.status}
                         </span>
                       </td>
-                      <td className="text-slate-500 text-xs">{school?.name}</td>
+                      <td className="text-slate-500 text-xs">
+                        {school?.name}
+                        {r.isConfidential && (
+                          <div className="flex items-center gap-1 text-slate-400 mt-0.5">
+                            <Lock size={10} />
+                            <span className="text-xs">Confidential</span>
+                          </div>
+                        )}
+                      </td>
                       <td className="text-slate-400 text-xs">{formatDate(r.createdAt)}</td>
                       <td>
                         <Link

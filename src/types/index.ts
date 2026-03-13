@@ -136,6 +136,10 @@ export interface IStudent {
   parentEmail?: string
   schoolId: string | ISchool
   isActive?: boolean
+  /** Stable anonymisation code — present on every student record */
+  codeName?: string
+  /** True when the API has anonymised this student due to isConfidential */
+  _isAnonymised?: boolean
 }
 
 export interface IRequest {

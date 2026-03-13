@@ -7,6 +7,7 @@ import Notification from '@/models/Notification'
 import User from '@/models/User'
 import { generateRequestNumber } from '@/lib/utils'
 import { sendNewRequestEmail } from '@/lib/email'
+import { maskStudentIfConfidential } from '@/lib/codename'
 import mongoose from 'mongoose'
 
 // ─── GET /api/requests — list with filters ────────────────────────────────────
@@ -31,7 +32,7 @@ export async function GET(req: NextRequest) {
   if (role === 'CLASS_TEACHER' || role === 'COORDINATOR') {
     filter.submittedById = new mongoose.Types.ObjectId(userId)
     filter.schoolId = new mongoose.Types.ObjectId(session.user.schoolId!)
-  } else if (role === 'SCHOOL_PRINCIPAL') {
+  } else if (role === 'SCHOOL_PRINCIPAL' || role === 'SCHOOL_ADMIN') {
     filter.schoolId = new mongoose.Types.ObjectId(session.user.schoolId!)
   } else if (role === 'PSYCHOLOGIST') {
     filter.assignedPsychologistId = new mongoose.Types.ObjectId(userId)
@@ -48,7 +49,7 @@ export async function GET(req: NextRequest) {
   const skip = (page - 1) * limit
   const [requests, total] = await Promise.all([
     CounselingRequest.find(filter)
-      .populate('studentId', 'name class section rollNumber')
+      .populate('studentId', 'name class section rollNumber codeName')
       .populate('schoolId', 'name code city')
       .populate('submittedById', 'name email role')
       .populate('assignedPsychologistId', 'name email')
@@ -60,8 +61,15 @@ export async function GET(req: NextRequest) {
     CounselingRequest.countDocuments(filter),
   ])
 
+  // Apply confidentiality masking per request
+  const viewerRole = session.user.role
+  const maskedRequests = requests.map((r: any) => ({
+    ...r,
+    studentId: maskStudentIfConfidential(r.studentId, r.isConfidential, viewerRole),
+  }))
+
   return NextResponse.json({
-    requests,
+    requests: maskedRequests,
     pagination: { total, page, limit, pages: Math.ceil(total / limit) },
   })
 }

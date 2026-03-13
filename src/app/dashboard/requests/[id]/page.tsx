@@ -212,16 +212,36 @@ export default function RequestDetailPage({ params }: { params: { id: string } }
         <div className="lg:col-span-2 space-y-5">
           {/* Student info */}
           <div className="bg-white rounded-xl border border-slate-200 p-5">
-            <h2 className="font-semibold text-slate-900 mb-4">Student Information</h2>
-            <div className="grid grid-cols-2 gap-4 text-sm">
-              <InfoRow label="Name" value={student?.name} />
-              <InfoRow label="Class / Section" value={`${student?.class}${student?.section ? ` – ${student.section}` : ''}`} />
-              <InfoRow label="Roll Number" value={student?.rollNumber || '—'} />
-              <InfoRow label="Age" value={student?.age ? `${student.age} yrs` : '—'} />
-              <InfoRow label="Gender" value={student?.gender || '—'} />
-              <InfoRow label="Parent" value={student?.parentName || '—'} />
-              <InfoRow label="Parent Phone" value={student?.parentPhone || '—'} />
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold text-slate-900">Student Information</h2>
+              {student?._isAnonymised && (
+                <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full">
+                  <Lock size={11} />
+                  Identity protected
+                </span>
+              )}
             </div>
+            {student?._isAnonymised ? (
+              <>
+                <div className="mb-3 rounded-lg bg-amber-50 border border-amber-200 px-4 py-2.5 text-xs text-amber-800">
+                  This request is confidential. The student&apos;s identity is replaced with an anonymised code visible only to authorised school staff.
+                </div>
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <InfoRow label="Code Name" value={student?.name} />
+                  <InfoRow label="Class / Section" value={`${student?.class}${student?.section ? ` – ${student.section}` : ''}`} />
+                </div>
+              </>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <InfoRow label="Name" value={student?.name} />
+                <InfoRow label="Class / Section" value={`${student?.class}${student?.section ? ` – ${student.section}` : ''}`} />
+                <InfoRow label="Roll Number" value={student?.rollNumber || '—'} />
+                <InfoRow label="Age" value={student?.age ? `${student.age} yrs` : '—'} />
+                <InfoRow label="Gender" value={student?.gender || '—'} />
+                <InfoRow label="Parent" value={student?.parentName || '—'} />
+                <InfoRow label="Parent Phone" value={student?.parentPhone || '—'} />
+              </div>
+            )}
           </div>
 
           {/* Concern */}

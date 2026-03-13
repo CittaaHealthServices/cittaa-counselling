@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose'
+import { generateCodeName } from '@/lib/codename'
 
 export interface IStudentDoc extends Document {
   _id: mongoose.Types.ObjectId
@@ -13,6 +14,8 @@ export interface IStudentDoc extends Document {
   parentEmail?: string
   schoolId: mongoose.Types.ObjectId
   isActive: boolean
+  /** Stable anonymisation code shown when request is confidential */
+  codeName?: string
   createdAt: Date
   updatedAt: Date
 }
@@ -30,9 +33,23 @@ const StudentSchema = new Schema<IStudentDoc>(
     parentEmail: { type: String, lowercase: true },
     schoolId:    { type: Schema.Types.ObjectId, ref: 'School', required: true },
     isActive:    { type: Boolean, default: true },
+    codeName:    { type: String },          // stable anonymisation code
   },
   { timestamps: true }
 )
+
+// Auto-generate codeName before first save so it's always present
+StudentSchema.pre('save', function (next) {
+  if (!this.codeName) {
+    this.codeName = generateCodeName({
+      class:      this.class,
+      section:    this.section,
+      rollNumber: this.rollNumber,
+      _id:        this._id,
+    })
+  }
+  next()
+})
 
 // Compound index: roll number unique per school
 StudentSchema.index({ rollNumber: 1, schoolId: 1 }, { unique: true, sparse: true })

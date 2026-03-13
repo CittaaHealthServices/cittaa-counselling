@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import connectDB from '@/lib/db'
 import { writeAudit } from '@/lib/audit'
+import { maskStudentIfConfidential } from '@/lib/codename'
 import CounselingRequest from '@/models/CounselingRequest'
 import Session from '@/models/Session'
 import Assessment from '@/models/Assessment'
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
   await connectDB()
 
   const request = await CounselingRequest.findById(params.id)
-    .populate('studentId', 'name class section rollNumber age gender parentName parentPhone')
+    .populate('studentId', 'name class section rollNumber codeName age gender parentName parentPhone')
     .populate('schoolId', 'name code city state address phone email')
     .populate('submittedById', 'name email role')
     .populate('assignedPsychologistId', 'name email phone qualification specialization isAvailable')
@@ -46,7 +47,18 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     .populate('assignedToId', 'name email phone')
     .lean()
 
-  return NextResponse.json({ request, sessions, assessments, rciReports })
+  // Apply confidentiality masking: non-CITTAA_ADMIN sees code name only
+  const viewerRole = session.user.role
+  const maskedRequest = {
+    ...request,
+    studentId: maskStudentIfConfidential(
+      (request as any).studentId,
+      (request as any).isConfidential,
+      viewerRole,
+    ),
+  }
+
+  return NextResponse.json({ request: maskedRequest, sessions, assessments, rciReports })
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: { id: string } }) {
