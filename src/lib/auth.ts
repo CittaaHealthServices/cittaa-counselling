@@ -4,6 +4,7 @@ import connectDB from '@/lib/db'
 import User from '@/models/User'
 import { Role } from '@/types'
 import AuditLog from '@/models/AuditLog'
+import { logError } from '@/lib/monitor'
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -23,10 +24,31 @@ export const authOptions: NextAuthOptions = {
           isActive: true,
         }).populate('schoolId', 'name code')
 
-        if (!user) return null
+        if (!user) {
+          // Log unknown-email attempt (don't expose which emails exist)
+          logError('AUTH_FAILURE', {
+            route:   '/api/auth/signin',
+            method:  'POST',
+            message: `Login failed — no active user found for email: ${credentials.email.toLowerCase()}`,
+            metadata: { email: credentials.email.toLowerCase(), reason: 'USER_NOT_FOUND' },
+          }).catch(() => {})
+          return null
+        }
 
         const isValid = await user.verifyPassword(credentials.password)
-        if (!isValid) return null
+        if (!isValid) {
+          // Log wrong-password attempt with user context
+          logError('AUTH_FAILURE', {
+            route:     '/api/auth/signin',
+            method:    'POST',
+            message:   `Login failed — wrong password for ${user.email}`,
+            userId:    user._id.toString(),
+            userEmail: user.email,
+            userRole:  user.role,
+            metadata:  { reason: 'WRONG_PASSWORD' },
+          }).catch(() => {})
+          return null
+        }
 
         // Update last login
         await User.findByIdAndUpdate(user._id, { lastLogin: new Date() })

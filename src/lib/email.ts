@@ -284,6 +284,52 @@ export async function sendWelcomeEmail(opts: {
     baseTemplate(content, 'Welcome to Cittaa Mind Bridge 🧠'))
 }
 
+// ─── Error alert email (sent to Cittaa admin on crashes) ──────────────────────
+const ALERT_RECIPIENT = process.env.ERROR_ALERT_EMAIL || 'info@cittaa.in'
+
+export async function sendErrorAlertEmail(opts: {
+  type:        string
+  route:       string
+  method?:     string
+  message:     string
+  stack?:      string
+  statusCode?: number
+  durationMs?: number
+  userId?:     string
+  userEmail?:  string
+  userRole?:   string
+  ipAddress?:  string
+}) {
+  const typeLabel: Record<string, string> = {
+    API_CRASH:      '🔴 API Crash',
+    FRONTEND_CRASH: '🟠 Frontend Crash',
+    AUTH_FAILURE:   '🟡 Auth Failure',
+    SLOW_API:       '🔵 Slow Response',
+  }
+  const ts = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })
+  const stackSnippet = opts.stack ? opts.stack.split('\n').slice(0, 6).join('\n') : ''
+
+  const content = `
+    <p class="text">An error was detected on the Cittaa platform at <strong>${ts} IST</strong>.</p>
+    <span class="badge badge-red">${typeLabel[opts.type] ?? opts.type}</span>
+    <div class="info-box">
+      <div class="info-row"><span class="info-label">Route</span><span class="info-value">${opts.method ?? ''} ${opts.route}</span></div>
+      ${opts.statusCode ? `<div class="info-row"><span class="info-label">Status</span><span class="info-value">${opts.statusCode}</span></div>` : ''}
+      ${opts.durationMs ? `<div class="info-row"><span class="info-label">Duration</span><span class="info-value">${opts.durationMs}ms</span></div>` : ''}
+      ${opts.userEmail  ? `<div class="info-row"><span class="info-label">User</span><span class="info-value">${opts.userEmail} (${opts.userRole ?? ''})</span></div>` : ''}
+      ${opts.ipAddress  ? `<div class="info-row"><span class="info-label">IP</span><span class="info-value">${opts.ipAddress}</span></div>` : ''}
+      <div class="info-row"><span class="info-label">Message</span><span class="info-value" style="max-width:300px;word-break:break-all;">${opts.message}</span></div>
+    </div>
+    ${stackSnippet ? `<pre style="background:#1e293b;color:#e2e8f0;padding:14px 16px;border-radius:8px;font-size:11px;overflow-x:auto;white-space:pre-wrap;word-break:break-all;">${stackSnippet}</pre>` : ''}
+    <a href="${APP_URL}/dashboard/errors" class="btn">View Error Log →</a>
+  `
+  return send(
+    ALERT_RECIPIENT,
+    `[Cittaa Alert] ${typeLabel[opts.type] ?? opts.type} — ${opts.route}`,
+    baseTemplate(content, 'Platform Error Alert')
+  )
+}
+
 export async function sendPasswordResetEmail(opts: {
   to: string
   name: string

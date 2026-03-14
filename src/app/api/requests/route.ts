@@ -8,10 +8,11 @@ import User from '@/models/User'
 import { generateRequestNumber } from '@/lib/utils'
 import { sendNewRequestEmail } from '@/lib/email'
 import { maskStudentIfConfidential } from '@/lib/codename'
+import { withErrorHandler } from '@/lib/monitor'
 import mongoose from 'mongoose'
 
 // ─── GET /api/requests — list with filters ────────────────────────────────────
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -72,10 +73,10 @@ export async function GET(req: NextRequest) {
     requests: maskedRequests,
     pagination: { total, page, limit, pages: Math.ceil(total / limit) },
   })
-}
+}, { route: '/api/requests' })
 
 // ─── POST /api/requests — create new request ──────────────────────────────────
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandler(async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -154,4 +155,4 @@ export async function POST(req: NextRequest) {
   ])
 
   return NextResponse.json({ request: populated }, { status: 201 })
-}
+}, { route: '/api/requests' })

@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
 import {
   Brain, LayoutDashboard, FileText, Calendar, ClipboardList,
-  Map, School, Users, UserCog, LogOut, X, Settings, BookOpen, Eye, Bell,
+  Map, School, Users, UserCog, LogOut, X, Settings, BookOpen, Eye, Bell, AlertTriangle,
   type LucideIcon,
 } from 'lucide-react'
 import { cn, ROLE_LABELS } from '@/lib/utils'
@@ -40,6 +40,8 @@ const NAV_ITEMS: NavItem[] = [
   { href: '/dashboard/users',         label: 'Users',          icon: Users,
     roles: ['CITTAA_ADMIN', 'CITTAA_SUPPORT', 'SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN'] },
   { href: '/dashboard/notifications',  label: 'Notifications',  icon: Bell },
+  { href: '/dashboard/errors',         label: 'Error Monitor',  icon: AlertTriangle,
+    roles: ['CITTAA_ADMIN', 'CITTAA_SUPPORT'] },
   { href: '/dashboard/profile',        label: 'Profile',        icon: UserCog },
 ]
 

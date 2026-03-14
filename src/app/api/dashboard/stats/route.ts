@@ -8,13 +8,14 @@ import Assessment from '@/models/Assessment'
 import RCIReport from '@/models/RCIReport'
 import Observation from '@/models/Observation'
 import School from '@/models/School'
+import { withErrorHandler } from '@/lib/monitor'
 import mongoose from 'mongoose'
 
 // Never cache this route — stats must always reflect live DB data
 export const dynamic    = 'force-dynamic'
 export const revalidate = 0
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -207,4 +208,4 @@ export async function GET(req: NextRequest) {
       classBreakdown: obsClassBreakdown, // for principal
     },
   })
-}
+}, { route: '/api/dashboard/stats' })
