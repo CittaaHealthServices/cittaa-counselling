@@ -3,219 +3,174 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import connectDB from '@/lib/db'
 import CounselingRequest from '@/models/CounselingRequest'
-import Session from '@/models/Session'
-import Assessment from '@/models/Assessment'
-import RCIReport from '@/models/RCIReport'
 import Observation from '@/models/Observation'
-import School from '@/models/School'
-import { withErrorHandler } from '@/lib/monitor'
+import Student from '@/models/Student'
+import Workshop from '@/models/Workshop'
 import mongoose from 'mongoose'
 
-// Never cache this route at the Next.js / CDN layer
-export const dynamic    = 'force-dynamic'
-export const revalidate = 0
+export const dynamic = 'force-dynamic'
 
-// ── Server-side in-memory cache (30 s TTL) ──────────────────────────────────
-// Keyed by "<role>:<schoolId|global>" so each user-type gets its own snapshot.
-// Eliminates repeat DB hammering when the dashboard auto-refreshes every 60 s
-// AND when multiple users of the same role load the page concurrently.
+// ── In-memory cache with 10-second TTL ──────────────────────────────────────
+const CACHE_TTL_MS = 10_000
 const _cache = new Map<string, { data: any; ts: number }>()
-const CACHE_TTL_MS = 10_000   // 10 seconds — short enough to feel live, long enough to absorb burst refreshes
 
-export const GET = withErrorHandler(async function GET(req: NextRequest) {
+// ─────────────────────────────────────────────────────────────────────────────
+export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  await connectDB()
+  const { role, id: userId, schoolId: userSchoolId } = session.user
+  const isCittaaAdmin  = ['CITTAA_ADMIN', 'CITTAA_SUPPORT'].includes(role)
+  const isSchoolUser   = ['SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN', 'CLASS_TEACHER', 'COORDINATOR'].includes(role)
+  const isPsychologist = role === 'PSYCHOLOGIST'
 
-  const { role, schoolId } = session.user
-  const isCittaaAdmin = ['CITTAA_ADMIN', 'CITTAA_SUPPORT'].includes(role)
-  const isSchoolAdmin = ['SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN'].includes(role)
-  const showObs       = isSchoolAdmin || isCittaaAdmin
-
-  // ── Cache check ──────────────────────────────────────────────────────────
-  // The client always sends ?_t=<timestamp> as a cache buster.
-  // We still honour our server-side TTL cache for burst protection, but if
-  // the client explicitly asks for fresh data (forceRefresh param) we skip it.
-  const cacheKey     = `${role}:${schoolId ?? 'global'}`
+  const cacheKey    = `stats:${role}:${userId}`
   const forceRefresh = req.nextUrl.searchParams.has('_t')
-  const cached       = _cache.get(cacheKey)
+  const cached      = _cache.get(cacheKey)
   if (!forceRefresh && cached && Date.now() - cached.ts < CACHE_TTL_MS) {
     return NextResponse.json({ ...cached.data, _cached: true })
   }
 
-  // ── Filters ──────────────────────────────────────────────────────────────
-  const schoolOid  = schoolId ? new mongoose.Types.ObjectId(schoolId) : null
-  const schoolMatch = isCittaaAdmin || !schoolOid ? {} : { schoolId: schoolOid }
-  const psychMatch  = role === 'PSYCHOLOGIST'
-    ? { assignedPsychologistId: new mongoose.Types.ObjectId(session.user.id) }
-    : {}
-  const baseFilter  = { ...schoolMatch, ...psychMatch }
-  const obsFilter   = isCittaaAdmin || !schoolOid ? {} : { schoolId: schoolOid }
+  await connectDB()
 
-  // ── Date helpers (IST-aware) ─────────────────────────────────────────────
-  const now         = new Date()
-  const todayIST    = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }))
-  const istOffset   = 5.5 * 60 * 60 * 1000
-  const startOfDay  = new Date(
-    new Date(todayIST.getFullYear(), todayIST.getMonth(), todayIST.getDate()).getTime() - istOffset
-  )
-  const startOfWeek  = new Date(startOfDay.getTime() - 7  * 24 * 60 * 60 * 1000)
-  const startOfMonth = new Date(todayIST.getFullYear(), todayIST.getMonth(), 1)
-  const sixMonthsAgo = new Date(Date.now() - 6 * 30 * 24 * 60 * 60 * 1000)
+  // ── Date helpers ─────────────────────────────────────────────────────────
+  const now        = new Date()
+  const todayStart = new Date(now); todayStart.setHours(0,0,0,0)
+  const todayEnd   = new Date(now); todayEnd.setHours(23,59,59,999)
+  const weekStart  = new Date(todayStart); weekStart.setDate(weekStart.getDate() - weekStart.getDay())
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1)
 
-  // ── Query 1: CounselingRequest — all stats in ONE $facet ─────────────────
-  // Replaces: 5 countDocuments + 3 aggregates = 8 round trips → 1
-  // Build facet object dynamically — never include conditional/no-op stages
-  const crFacetDef: Record<string, any[]> = {
-    total:          [{ $count: 'n' }],
-    pending:        [{ $match: { status: 'PENDING_APPROVAL' } }, { $count: 'n' }],
-    urgent:         [{ $match: { priority: 'URGENT', status: { $ne: 'CLOSED' } } }, { $count: 'n' }],
-    closedThisMonth:[{ $match: { status: 'CLOSED', updatedAt: { $gte: startOfMonth } } }, { $count: 'n' }],
-    byStatus:       [{ $group: { _id: '$status', count: { $sum: 1 } } }],
-    byPriority:     [
-      { $match: { status: { $ne: 'CLOSED' } } },
-      { $group: { _id: '$priority', count: { $sum: 1 } } },
-    ],
-    monthlyTrend:   [
-      { $match: { createdAt: { $gte: sixMonthsAgo } } },
-      { $group: { _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } }, count: { $sum: 1 } } },
-      { $sort: { '_id.year': 1, '_id.month': 1 } },
-    ],
+  // ── Base filters ─────────────────────────────────────────────────────────
+  const crFilter: any  = {}
+  const obsFilter: any = {}
+  const wkFilter: any  = {}
+
+  if (isSchoolUser && userSchoolId) {
+    const sid = new mongoose.Types.ObjectId(userSchoolId)
+    crFilter.schoolId   = sid
+    obsFilter.schoolId  = sid
+    wkFilter.schoolId   = sid
+  } else if (isPsychologist) {
+    const uid = new mongoose.Types.ObjectId(userId)
+    crFilter.assignedTo      = uid
+    obsFilter.conductedById  = uid
+    wkFilter.conductedById   = uid
   }
-  // Only attach schoolCoverage for roles that actually need it
+
+  // ── CounselingRequest facets ──────────────────────────────────────────────
+  const crFacetDef: Record<string, any[]> = {
+    total:    [{ $count: 'n' }],
+    pending:  [{ $match: { status: 'PENDING_APPROVAL' } }, { $count: 'n' }],
+    active:   [{ $match: { status: { $in: ['APPROVED', 'SCHEDULED', 'IN_PROGRESS'] } } }, { $count: 'n' }],
+    resolved: [{ $match: { status: { $in: ['COMPLETED', 'CLOSED'] } } }, { $count: 'n' }],
+    today:    [{ $match: { createdAt: { $gte: todayStart, $lte: todayEnd } } }, { $count: 'n' }],
+    thisWeek: [{ $match: { createdAt: { $gte: weekStart  } } }, { $count: 'n' }],
+    thisMonth:[{ $match: { createdAt: { $gte: monthStart } } }, { $count: 'n' }],
+    byStatus: [{ $group: { _id: '$status', count: { $sum: 1 } } }],
+    bySeverity: [{ $group: {
+      _id: null,
+      high:   { $sum: { $cond: { if: { $eq: ['$severity', 'HIGH'] },   then: 1, else: 0 } } },
+      medium: { $sum: { $cond: { if: { $eq: ['$severity', 'MEDIUM'] }, then: 1, else: 0 } } },
+      low:    { $sum: { $cond: { if: { $eq: ['$severity', 'LOW'] },    then: 1, else: 0 } } },
+    }}],
+  }
   if (isCittaaAdmin) {
     crFacetDef.schoolCoverage = [
       { $group: { _id: '$schoolId', count: { $sum: 1 } } },
       { $lookup: { from: 'schools', localField: '_id', foreignField: '_id', as: 'school' } },
-      { $unwind: { path: '$school', preserveNullAndEmptyArrays: false } },
-      { $project: { schoolName: '$school.name', schoolCode: '$school.code', count: 1 } },
+      { $unwind: { path: '$school', preserveNullAndEmptyArrays: true } },
+      { $project: { name: '$school.name', count: 1 } },
       { $sort: { count: -1 } },
       { $limit: 10 },
     ]
   }
 
-  const [crFacets] = await CounselingRequest.aggregate([
-    { $match: baseFilter },
-    { $facet: crFacetDef },
-  ])
-
-  // ── Query 2: Observation — all obs stats in ONE $facet ───────────────────
-  // Replaces: 3 countDocuments + 3 aggregates = 6 round trips → 1
-  // Only executed if the role actually sees observations
-  let obsFacetsPromise: Promise<any[]>
-  if (showObs) {
-    const obsFacetDef: Record<string, any[]> = {
-      today:     [{ $match: { createdAt: { $gte: startOfDay } } }, { $count: 'n' }],
-      thisWeek:  [{ $match: { createdAt: { $gte: startOfWeek } } }, { $count: 'n' }],
-      thisMonth: [{ $match: { createdAt: { $gte: startOfMonth } } }, { $count: 'n' }],
-      byStatus:  [{ $group: { _id: '$status', count: { $sum: 1 } } }],
-    }
-    if (isCittaaAdmin) {
-      obsFacetDef.perSchool = [
-        { $group: {
-          _id:       '$schoolId',
-          count:     { $sum: 1 },
-          escalated: { $sum: { $cond: { if: { $eq: ['$status', 'ESCALATED'] }, then: 1, else: 0 } } },
-          pending:   { $sum: { $cond: { if: { $eq: ['$status', 'SHARED'] },    then: 1, else: 0 } } },
-        }},
-        { $lookup: { from: 'schools', localField: '_id', foreignField: '_id', as: 'school' } },
-        { $unwind: { path: '$school', preserveNullAndEmptyArrays: true } },
-        { $project: { schoolName: '$school.name', schoolCode: '$school.code', count: 1, escalated: 1, pending: 1 } },
-        { $sort: { count: -1 } },
-        { $limit: 15 },
-      ]
-    }
-    if (isSchoolAdmin) {
-      obsFacetDef.classBreakdown = [
-        { $match: { createdAt: { $gte: startOfMonth } } },
-        { $lookup: { from: 'students', localField: 'studentId', foreignField: '_id', as: 'student' } },
-        { $unwind: { path: '$student', preserveNullAndEmptyArrays: true } },
-        { $group: {
-          _id:       { class: '$student.class', section: '$student.section' },
-          count:     { $sum: 1 },
-          escalated: { $sum: { $cond: { if: { $eq: ['$status', 'ESCALATED'] }, then: 1, else: 0 } } },
-          pending:   { $sum: { $cond: { if: { $eq: ['$status', 'SHARED'] },    then: 1, else: 0 } } },
-        }},
-        { $sort: { count: -1 } },
-      ]
-    }
-    obsFacetsPromise = Observation.aggregate([
-      { $match: obsFilter },
-      { $facet: obsFacetDef },
-    ])
-  } else {
-    obsFacetsPromise = Promise.resolve([{}])
+  // ── Observation facets ────────────────────────────────────────────────────
+  const obsFacetDef: Record<string, any[]> = {
+    total:    [{ $count: 'n' }],
+    today:    [{ $match: { createdAt: { $gte: todayStart, $lte: todayEnd } } }, { $count: 'n' }],
+    thisWeek: [{ $match: { createdAt: { $gte: weekStart  } } }, { $count: 'n' }],
+    thisMonth:[{ $match: { createdAt: { $gte: monthStart } } }, { $count: 'n' }],
+  }
+  if (isCittaaAdmin) {
+    obsFacetDef.bySchool = [
+      { $group: { _id: '$schoolId', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]
   }
 
-  // ── Queries 3-5: Session, Assessment+RCI, School — still parallel ─────────
-  const sessionFilter  = role === 'PSYCHOLOGIST'
-    ? { psychologistId: new mongoose.Types.ObjectId(session.user.id), status: 'SCHEDULED' }
-    : { status: 'SCHEDULED' }
-  const rciFilter = role === 'RCI_TEAM'
-    ? { assignedToId: new mongoose.Types.ObjectId(session.user.id), status: { $in: ['NOTIFIED', 'VISIT_SCHEDULED'] } }
-    : { ...schoolMatch, status: { $in: ['NOTIFIED', 'VISIT_SCHEDULED'] } }
+  // ── Workshop facets ───────────────────────────────────────────────────────
+  const wkFacetDef: Record<string, any[]> = {
+    total:       [{ $count: 'n' }],
+    planned:     [{ $match: { status: { $in: ['PLANNED', 'CONFIRMED'] } } }, { $count: 'n' }],
+    completed:   [{ $match: { status: 'COMPLETED' } }, { $count: 'n' }],
+    cancelled:   [{ $match: { status: { $in: ['CANCELLED', 'POSTPONED'] } } }, { $count: 'n' }],
+    thisMonth:   [{ $match: { plannedDate: { $gte: monthStart } } }, { $count: 'n' }],
+    byType:      [{ $group: { _id: '$programType', count: { $sum: 1 } } }],
+  }
+  if (isCittaaAdmin) {
+    wkFacetDef.bySchool = [
+      { $group: { _id: '$schoolId', count: { $sum: 1 } } },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]
+  }
 
-  const [obsFacetsRaw, activeSessions, assessmentsPending, rciPending, activeSchoolsCount] =
-    await Promise.all([
-      obsFacetsPromise,
-      Session.countDocuments(sessionFilter),
-      Assessment.countDocuments({ status: 'PENDING_APPROVAL' }),
-      RCIReport.countDocuments(rciFilter),
-      isCittaaAdmin ? School.countDocuments({ isActive: true }) : Promise.resolve(0),
-    ])
+  // ── Run aggregations in parallel ──────────────────────────────────────────
+  const [crResult, obsResult, wkResult, studentCount] = await Promise.all([
+    CounselingRequest.aggregate([{ $match: crFilter }, { $facet: crFacetDef }]),
+    Observation.aggregate([{ $match: obsFilter }, { $facet: obsFacetDef }]),
+    Workshop.aggregate([{ $match: wkFilter }, { $facet: wkFacetDef }]),
+    isCittaaAdmin || isSchoolUser
+      ? Student.countDocuments(isSchoolUser && userSchoolId ? { schoolId: new mongoose.Types.ObjectId(userSchoolId) } : {})
+      : Promise.resolve(0),
+  ])
 
-  // ── Unpack $facet results ─────────────────────────────────────────────────
-  const cr = crFacets ?? {}
-  const totalRequests  = cr.total?.[0]?.n          ?? 0
-  const pendingApproval= cr.pending?.[0]?.n         ?? 0
-  const urgentCases    = cr.urgent?.[0]?.n          ?? 0
-  const closedThisMonth= cr.closedThisMonth?.[0]?.n ?? 0
+  const cr  = crResult[0]  ?? {}
+  const obs = obsResult[0] ?? {}
+  const wk  = wkResult[0]  ?? {}
 
-  const requestsByStatus: Record<string, number> = {}
-  ;(cr.byStatus ?? []).forEach((s: any) => { requestsByStatus[s._id] = s.count })
+  const n = (facet: any[] | undefined) => facet?.[0]?.n ?? 0
 
-  const requestsByPriority: Record<string, number> = {}
-  ;(cr.byPriority ?? []).forEach((p: any) => { requestsByPriority[p._id] = p.count })
-
-  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']
-  const monthlyTrend = (cr.monthlyTrend ?? []).map((m: any) => ({
-    month: `${MONTHS[m._id.month - 1]} ${m._id.year}`,
-    count: m.count,
-  }))
-
-  const schoolCoverage = cr.schoolCoverage ?? []
-
-  // Observation facets
-  const obsRaw = (obsFacetsRaw as any[])[0] ?? {}
-  const obsStatusMap: Record<string, number> = {}
-  ;(obsRaw.byStatus ?? []).forEach((s: any) => { obsStatusMap[s._id] = s.count })
-
-  const result = {
-    totalRequests,
-    pendingApproval,
-    activeSessions,
-    assessmentsPending,
-    rciPending,
-    closedThisMonth,
-    urgentCases,
-    activeSchoolsCount,
-    requestsByStatus,
-    requestsByPriority,
-    monthlyTrend,
-    schoolCoverage,
+  const data = {
+    counselingRequests: {
+      total:     n(cr.total),
+      pending:   n(cr.pending),
+      active:    n(cr.active),
+      resolved:  n(cr.resolved),
+      today:     n(cr.today),
+      thisWeek:  n(cr.thisWeek),
+      thisMonth: n(cr.thisMonth),
+      byStatus:  cr.byStatus   ?? [],
+      bySeverity: cr.bySeverity?.[0] ?? { high: 0, medium: 0, low: 0 },
+      ...(isCittaaAdmin ? { schoolCoverage: cr.schoolCoverage ?? [] } : {}),
+    },
     observations: {
-      today:          obsRaw.today?.[0]?.n    ?? 0,
-      thisWeek:       obsRaw.thisWeek?.[0]?.n ?? 0,
-      thisMonth:      obsRaw.thisMonth?.[0]?.n ?? 0,
-      byStatus:       obsStatusMap,
-      perSchool:      obsRaw.perSchool      ?? [],
-      classBreakdown: obsRaw.classBreakdown ?? [],
+      total:     n(obs.total),
+      today:     n(obs.today),
+      thisWeek:  n(obs.thisWeek),
+      thisMonth: n(obs.thisMonth),
+      ...(isCittaaAdmin ? { bySchool: obs.bySchool ?? [] } : {}),
+    },
+    workshops: {
+      total:     n(wk.total),
+      planned:   n(wk.planned),
+      completed: n(wk.completed),
+      cancelled: n(wk.cancelled),
+      thisMonth: n(wk.thisMonth),
+      byType:    wk.byType ?? [],
+      ...(isCittaaAdmin ? { bySchool: wk.bySchool ?? [] } : {}),
+    },
+    students: {
+      total: studentCount,
+    },
+    meta: {
+      role,
+      generatedAt: new Date().toISOString(),
     },
   }
 
-  // ── Store in cache ────────────────────────────────────────────────────────
-  _cache.set(cacheKey, { data: result, ts: Date.now() })
-
-  return NextResponse.json(result)
-}, { route: '/api/dashboard/stats' })
+  _cache.set(cacheKey, { data, ts: Date.now() })
+  return NextResponse.json(data)
+}
