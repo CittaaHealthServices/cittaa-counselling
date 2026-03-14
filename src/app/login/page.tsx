@@ -2,12 +2,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 import { Eye, EyeOff, Brain, Shield, Users, BookOpen } from 'lucide-react'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [showPwd, setShowPwd]   = useState(false)
@@ -26,8 +24,10 @@ export default function LoginPage() {
         toast.error('Invalid email or password')
       } else {
         toast.success('Welcome back!')
-        router.push('/dashboard')
-        router.refresh()
+        // Hard navigation — ensures the session cookie is committed before the
+        // next request hits the server, avoiding the router.push + router.refresh
+        // race condition that kept users stuck on the login page.
+        window.location.href = '/dashboard'
       }
     } finally {
       setLoading(false)
