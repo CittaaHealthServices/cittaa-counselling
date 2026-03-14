@@ -81,6 +81,9 @@ ObservationSchema.index({ schoolId: 1, status: 1, createdAt: -1 })
 ObservationSchema.index({ psychologistId: 1, createdAt: -1 })
 ObservationSchema.index({ sharedWithId: 1, status: 1 })
 ObservationSchema.index({ studentId: 1 })
+// Standalone createdAt index for fast date-range $facet sub-pipelines
+// (today / thisWeek / thisMonth filters in the dashboard stats aggregation)
+ObservationSchema.index({ createdAt: -1 })
 
 const Observation: Model<IObservationDoc> =
   mongoose.models.Observation ||
