@@ -21,19 +21,31 @@ const STATUS_ORDER = [
 
 export default function DashboardPage() {
   const { data: session } = useSession()
-  const [stats, setStats]     = useState<any>(null)
-  const [loading, setLoading] = useState(true)
+  const [stats, setStats]         = useState<any>(null)
+  const [loading, setLoading]     = useState(true)
   const [refreshing, setRefreshing] = useState(false)
+  const [fetchError, setFetchError] = useState(false)
   const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
 
   const loadStats = async (silent = false) => {
     if (!silent) setLoading(true)
     else setRefreshing(true)
     try {
-      const res = await fetch('/api/dashboard/stats', { cache: 'no-store' })
+      // Cache-buster param guarantees a fresh response regardless of browser/CDN caching
+      const res = await fetch(`/api/dashboard/stats?_t=${Date.now()}`, { cache: 'no-store' })
+      if (!res.ok) {
+        // API returned an error — keep the existing stats visible rather than
+        // overwriting them with an error payload (which would zero-out all numbers)
+        setFetchError(true)
+        return
+      }
       const data = await res.json()
       setStats(data)
+      setFetchError(false)
       setLastUpdated(new Date())
+    } catch {
+      // Network error — same: preserve existing stats, just show the warning indicator
+      setFetchError(true)
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -80,11 +92,15 @@ export default function DashboardPage() {
             {role === 'PSYCHOLOGIST'    && 'Psychologist — your active cases'}
             {role === 'RCI_TEAM'        && 'RCI Team — your assigned visits'}
           </p>
-          {lastUpdated && (
+          {fetchError ? (
+            <p className="text-orange-500 text-xs mt-1 flex items-center gap-1">
+              <AlertCircle size={11} /> Could not refresh — showing last known data
+            </p>
+          ) : lastUpdated ? (
             <p className="text-slate-400 text-xs mt-1">
               Updated {lastUpdated.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
             </p>
-          )}
+          ) : null}
         </div>
         <div className="flex items-center gap-2">
           <button

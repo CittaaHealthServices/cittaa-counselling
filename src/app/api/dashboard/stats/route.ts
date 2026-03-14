@@ -20,7 +20,7 @@ export const revalidate = 0
 // Eliminates repeat DB hammering when the dashboard auto-refreshes every 60 s
 // AND when multiple users of the same role load the page concurrently.
 const _cache = new Map<string, { data: any; ts: number }>()
-const CACHE_TTL_MS = 30_000   // 30 seconds
+const CACHE_TTL_MS = 10_000   // 10 seconds — short enough to feel live, long enough to absorb burst refreshes
 
 export const GET = withErrorHandler(async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
@@ -34,9 +34,13 @@ export const GET = withErrorHandler(async function GET(req: NextRequest) {
   const showObs       = isSchoolAdmin || isCittaaAdmin
 
   // ── Cache check ──────────────────────────────────────────────────────────
-  const cacheKey = `${role}:${schoolId ?? 'global'}`
-  const cached   = _cache.get(cacheKey)
-  if (cached && Date.now() - cached.ts < CACHE_TTL_MS) {
+  // The client always sends ?_t=<timestamp> as a cache buster.
+  // We still honour our server-side TTL cache for burst protection, but if
+  // the client explicitly asks for fresh data (forceRefresh param) we skip it.
+  const cacheKey     = `${role}:${schoolId ?? 'global'}`
+  const forceRefresh = req.nextUrl.searchParams.has('_t')
+  const cached       = _cache.get(cacheKey)
+  if (!forceRefresh && cached && Date.now() - cached.ts < CACHE_TTL_MS) {
     return NextResponse.json({ ...cached.data, _cached: true })
   }
 
