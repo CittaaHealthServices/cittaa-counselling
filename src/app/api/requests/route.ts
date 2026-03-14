@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import connectDB from '@/lib/db'
 import CounselingRequest from '@/models/CounselingRequest'
+import Student from '@/models/Student'       // must be imported so Mongoose registers the schema before .populate()
 import Notification from '@/models/Notification'
 import User from '@/models/User'
 import { generateRequestNumber } from '@/lib/utils'

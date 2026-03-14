@@ -88,7 +88,7 @@ export const GET = withErrorHandler(async function GET(req: NextRequest) {
           { $project: { schoolName: '$school.name', schoolCode: '$school.code', count: 1 } },
           { $sort: { count: -1 } },
           { $limit: 10 },
-        ] : [{ $limit: 0 }],
+        ] : [{ $match: { $expr: { $eq: [0, 1] } } }],
       },
     },
   ])
@@ -117,7 +117,7 @@ export const GET = withErrorHandler(async function GET(req: NextRequest) {
               { $project: { schoolName: '$school.name', schoolCode: '$school.code', count: 1, escalated: 1, pending: 1 } },
               { $sort: { count: -1 } },
               { $limit: 15 },
-            ] : [{ $limit: 0 }],
+            ] : [{ $match: { $expr: { $eq: [0, 1] } } }],
             classBreakdown: isSchoolAdmin ? [
               { $match: { createdAt: { $gte: startOfMonth } } },
               { $lookup: { from: 'students', localField: 'studentId', foreignField: '_id', as: 'student' } },
@@ -129,7 +129,7 @@ export const GET = withErrorHandler(async function GET(req: NextRequest) {
                 pending:   { $sum: { $cond: [{ $eq: ['$status', 'SHARED'] }, 1, 0] } },
               }},
               { $sort: { count: -1 } },
-            ] : [{ $limit: 0 }],
+            ] : [{ $match: { $expr: { $eq: [0, 1] } } }],
           },
         },
       ])
