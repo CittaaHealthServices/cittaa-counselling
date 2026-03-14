@@ -1,178 +1,160 @@
 'use client'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { signIn, useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { signIn } from 'next-auth/react'
-import toast from 'react-hot-toast'
-import { Eye, EyeOff, Brain, Shield, Users, BookOpen } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
+  const { status } = useSession()
   const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
   const [showPwd, setShowPwd]   = useState(false)
   const [loading, setLoading]   = useState(false)
+  const [waitingRedirect, setWaitingRedirect] = useState(false)
+  const [error, setError]       = useState('')
+
+  // ── Redirect as soon as NextAuth confirms the session ───────────────────
+  // Fires when: (a) user just signed in, or (b) already-logged-in user visits /login.
+  // status === 'authenticated' is only set AFTER the session cookie is fully
+  // committed + verified by NextAuth — making this timing-safe.
+  // window.location.href alone races against that commit and can lose.
+  useEffect(() => {
+    if (status === 'authenticated') {
+      window.location.replace('/dashboard')
+    }
+  }, [status])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (loading || waitingRedirect) return
     setLoading(true)
+    setError('')
+
     try {
-      const res = await signIn('credentials', {
-        email: email.trim().toLowerCase(),
-        password,
+      const result = await signIn('credentials', {
         redirect: false,
+        email:    email.trim().toLowerCase(),
+        password,
       })
-      if (res?.error) {
-        toast.error('Invalid email or password')
-      } else {
-        toast.success('Welcome back!')
-        // Hard navigation — ensures the session cookie is committed before the
-        // next request hits the server, avoiding the router.push + router.refresh
-        // race condition that kept users stuck on the login page.
-        window.location.href = '/dashboard'
+
+      if (!result?.ok || result.error) {
+        setError(
+          result?.error === 'CredentialsSignin'
+            ? 'Invalid email or password. Please check and try again.'
+            : result?.error || 'Login failed. Please try again.'
+        )
+        return
       }
+
+      // signIn succeeded — show spinner while useSession propagates and
+      // the useEffect above triggers window.location.replace('/dashboard')
+      setWaitingRedirect(true)
+
+    } catch {
+      setError('Something went wrong. Please check your connection and try again.')
     } finally {
       setLoading(false)
     }
   }
 
-  return (
-    <div className="min-h-screen flex" style={{ background: '#0f172a' }}>
-      {/* Left panel — branding */}
-      <div className="hidden lg:flex flex-col justify-between w-1/2 p-12"
-           style={{ background: 'linear-gradient(135deg, #4c1d95 0%, #7c3aed 60%, #7C3AED 100%)' }}>
-        <div>
-          <div className="flex items-center gap-3 mb-12">
-            <div className="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-              <Brain size={22} className="text-white" />
-            </div>
-            <div>
-              <div className="cittaa-brand text-white text-xl leading-none">Cittaa</div>
-              <div className="text-purple-200 text-xs">Mind Bridge</div>
-            </div>
-          </div>
-          <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-            School Counselling<br/>
-            <span style={{ color: '#c4b5fd' }}>Made Structured.</span>
-          </h1>
-          <p className="text-purple-100 text-lg leading-relaxed">
-            A secure, end-to-end platform for schools and Cittaa psychologists
-            to manage student counselling requests, sessions, and assessments.
-          </p>
-        </div>
-        {/* Feature highlights */}
-        <div className="grid grid-cols-2 gap-4">
-          {[
-            { icon: Shield, label: 'Private & Confidential', desc: 'Role-based access control' },
-            { icon: Users,  label: 'Multi-School Network', desc: '20+ school support' },
-            { icon: BookOpen, label: 'Full Case Tracking', desc: 'Request to resolution' },
-            { icon: Brain, label: 'RCI Coordination', desc: 'Field visits & reports' },
-          ].map(({ icon: Icon, label, desc }) => (
-            <div key={label} className="bg-white/10 rounded-xl p-4">
-              <Icon size={20} className="text-purple-200 mb-2" />
-              <div className="text-white text-sm font-medium">{label}</div>
-              <div className="text-purple-200 text-xs mt-0.5">{desc}</div>
-            </div>
-          ))}
+  // Full-screen spinner while session propagates / redirect in progress
+  if (waitingRedirect || status === 'authenticated') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-900">
+        <div className="text-center">
+          <Loader2 className="animate-spin text-purple-300 mx-auto mb-3" size={36} />
+          <p className="text-purple-200 text-sm">Signing you in…</p>
         </div>
       </div>
+    )
+  }
 
-      {/* Right panel — login form */}
-      <div className="flex-1 flex items-center justify-center p-8"
-           style={{ background: '#0f172a' }}>
-        <div className="w-full max-w-md">
-          {/* Mobile logo */}
-          <div className="flex items-center gap-3 mb-8 lg:hidden">
-            <div className="w-9 h-9 bg-purple-600 rounded-xl flex items-center justify-center">
-              <Brain size={20} className="text-white" />
-            </div>
-            <div>
-              <div className="text-white"><span className="cittaa-brand text-lg">Cittaa</span> <span className="font-semibold text-sm">Mind Bridge</span></div>
-              <div className="text-slate-400 text-xs">School Counselling Platform</div>
-            </div>
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-900 px-4">
+      <div className="w-full max-w-md">
+
+        {/* Brand */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-white/10 rounded-2xl mb-4 backdrop-blur-sm border border-white/20">
+            <span className="text-2xl font-bold text-white">C</span>
           </div>
-
-          <div className="bg-slate-800 rounded-2xl p-8 border border-slate-700">
-            <h2 className="text-2xl font-bold text-white mb-1">Sign in</h2>
-            <p className="text-slate-400 text-sm mb-8">Enter your credentials to access the platform</p>
-
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div>
-                <label className="block text-sm font-medium text-slate-300 mb-1.5">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                  placeholder="you@school.edu.in"
-                  className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3.5 py-2.5
-                             text-white placeholder:text-slate-500 text-sm
-                             focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                />
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1.5">
-                  <label className="block text-sm font-medium text-slate-300">
-                    Password
-                  </label>
-                  <Link href="/forgot-password"
-                    className="text-xs text-purple-400 hover:text-purple-300 transition-colors">
-                    Forgot password?
-                  </Link>
-                </div>
-                <div className="relative">
-                  <input
-                    type={showPwd ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    placeholder="Enter your password"
-                    className="w-full bg-slate-900 border border-slate-600 rounded-lg px-3.5 py-2.5 pr-11
-                               text-white placeholder:text-slate-500 text-sm
-                               focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPwd(!showPwd)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200"
-                  >
-                    {showPwd ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-purple-600 hover:bg-purple-700 disabled:opacity-60
-                           text-white py-3 rounded-lg font-medium text-sm transition-colors
-                           flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"/>
-                      <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/>
-                    </svg>
-                    Signing in…
-                  </>
-                ) : 'Sign in to Platform'}
-              </button>
-            </form>
-
-            <div className="mt-6 pt-5 border-t border-slate-700">
-              <p className="text-slate-500 text-xs text-center">
-                Access is provided by your school admin or Cittaa team.
-                <br/>Contact <span className="text-purple-400">support@cittaa.in</span> for help.
-              </p>
-            </div>
-          </div>
-
-          <p className="text-center text-slate-600 text-xs mt-6">
-            © 2024 Cittaa Health Services Pvt. Ltd. · All rights reserved
-          </p>
+          <h1
+            className="text-3xl font-bold text-white tracking-tight"
+            style={{ fontFamily: "'Kaushan Script', cursive" }}
+          >
+            Cittaa
+          </h1>
+          <p className="text-purple-300 text-sm mt-1">MindBridge™ School Mental Health Platform</p>
         </div>
+
+        {/* Card */}
+        <div className="bg-white/10 backdrop-blur-md rounded-2xl border border-white/20 p-8 shadow-2xl">
+          <h2 className="text-xl font-semibold text-white mb-6">Sign in to your account</h2>
+
+          {error && (
+            <div className="mb-4 px-4 py-3 rounded-xl bg-red-500/20 border border-red-400/40 text-red-200 text-sm">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div>
+              <label className="block text-sm text-purple-200 mb-1.5 font-medium">Email address</label>
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+                placeholder="you@school.edu.in"
+                className="w-full px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-400/60 focus:border-transparent transition"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm text-purple-200 mb-1.5 font-medium">Password</label>
+              <div className="relative">
+                <input
+                  type={showPwd ? 'text' : 'password'}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  placeholder="••••••••"
+                  className="w-full px-4 py-3 pr-11 rounded-xl bg-white/10 border border-white/20 text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-400/60 focus:border-transparent transition"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPwd(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-white/50 hover:text-white/80 transition"
+                  tabIndex={-1}
+                >
+                  {showPwd ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <Link href="/forgot-password" className="text-xs text-purple-300 hover:text-white transition">
+                Forgot password?
+              </Link>
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading || waitingRedirect}
+              className="w-full py-3 rounded-xl bg-purple-500 hover:bg-purple-400 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold transition-colors flex items-center justify-center gap-2 mt-2"
+            >
+              {loading ? (
+                <><Loader2 size={18} className="animate-spin" /> Signing in…</>
+              ) : 'Sign in'}
+            </button>
+          </form>
+        </div>
+
+        <p className="text-center text-purple-400/60 text-xs mt-6">
+          © {new Date().getFullYear()} Cittaa Health Services Pvt. Ltd.
+        </p>
       </div>
     </div>
   )

@@ -3,26 +3,11 @@ import { NextResponse } from 'next/server'
 
 export default withAuth(
   function middleware(req) {
-    const token = req.nextauth.token
+    const token    = req.nextauth.token
     const pathname = req.nextUrl.pathname
 
-    // Redirect authenticated users away from login
-    if (pathname === '/login' && token) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
-    }
-
-    // Role-based route guards
-    if (
-      pathname.startsWith('/dashboard/schools') &&
-      !['CITTAA_ADMIN', 'CITTAA_SUPPORT'].includes(token?.role as string)
-    ) {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
-    }
-
-    if (
-      pathname.startsWith('/dashboard/users') &&
-      !['CITTAA_ADMIN', 'CITTAA_SUPPORT', 'SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN'].includes(token?.role as string)
-    ) {
+    // Redirect already-authenticated users away from /login
+    if (token && pathname === '/login') {
       return NextResponse.redirect(new URL('/dashboard', req.url))
     }
 
@@ -30,19 +15,23 @@ export default withAuth(
   },
   {
     callbacks: {
+      // Allow the request through only when there is a valid token for /dashboard paths.
+      // All other paths (login, forgot-password, reset-password, api/auth) are public.
       authorized: ({ token, req }) => {
-        const pathname = req.nextUrl.pathname
-        if (pathname.startsWith('/dashboard') || pathname.startsWith('/api/')) {
-          // API routes check auth individually
-          if (pathname.startsWith('/api/auth')) return true
-          if (pathname.startsWith('/dashboard')) return !!token
-        }
+        const { pathname } = req.nextUrl
+        if (pathname.startsWith('/dashboard')) return !!token
         return true
       },
+    },
+    pages: {
+      signIn: '/login',
     },
   }
 )
 
 export const config = {
-  matcher: ['/dashboard/:path*'],
+  matcher: [
+    '/dashboard/:path*',
+    '/login',
+  ],
 }
