@@ -62,78 +62,87 @@ export const GET = withErrorHandler(async function GET(req: NextRequest) {
 
   // ── Query 1: CounselingRequest — all stats in ONE $facet ─────────────────
   // Replaces: 5 countDocuments + 3 aggregates = 8 round trips → 1
+  // Build facet object dynamically — never include conditional/no-op stages
+  const crFacetDef: Record<string, any[]> = {
+    total:          [{ $count: 'n' }],
+    pending:        [{ $match: { status: 'PENDING_APPROVAL' } }, { $count: 'n' }],
+    urgent:         [{ $match: { priority: 'URGENT', status: { $ne: 'CLOSED' } } }, { $count: 'n' }],
+    closedThisMonth:[{ $match: { status: 'CLOSED', updatedAt: { $gte: startOfMonth } } }, { $count: 'n' }],
+    byStatus:       [{ $group: { _id: '$status', count: { $sum: 1 } } }],
+    byPriority:     [
+      { $match: { status: { $ne: 'CLOSED' } } },
+      { $group: { _id: '$priority', count: { $sum: 1 } } },
+    ],
+    monthlyTrend:   [
+      { $match: { createdAt: { $gte: sixMonthsAgo } } },
+      { $group: { _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } }, count: { $sum: 1 } } },
+      { $sort: { '_id.year': 1, '_id.month': 1 } },
+    ],
+  }
+  // Only attach schoolCoverage for roles that actually need it
+  if (isCittaaAdmin) {
+    crFacetDef.schoolCoverage = [
+      { $group: { _id: '$schoolId', count: { $sum: 1 } } },
+      { $lookup: { from: 'schools', localField: '_id', foreignField: '_id', as: 'school' } },
+      { $unwind: { path: '$school', preserveNullAndEmptyArrays: false } },
+      { $project: { schoolName: '$school.name', schoolCode: '$school.code', count: 1 } },
+      { $sort: { count: -1 } },
+      { $limit: 10 },
+    ]
+  }
+
   const [crFacets] = await CounselingRequest.aggregate([
     { $match: baseFilter },
-    {
-      $facet: {
-        total:          [{ $count: 'n' }],
-        pending:        [{ $match: { status: 'PENDING_APPROVAL' } }, { $count: 'n' }],
-        urgent:         [{ $match: { priority: 'URGENT', status: { $ne: 'CLOSED' } } }, { $count: 'n' }],
-        closedThisMonth:[{ $match: { status: 'CLOSED', updatedAt: { $gte: startOfMonth } } }, { $count: 'n' }],
-        byStatus:       [{ $group: { _id: '$status', count: { $sum: 1 } } }],
-        byPriority:     [
-          { $match: { status: { $ne: 'CLOSED' } } },
-          { $group: { _id: '$priority', count: { $sum: 1 } } },
-        ],
-        monthlyTrend:   [
-          { $match: { createdAt: { $gte: sixMonthsAgo } } },
-          { $group: { _id: { year: { $year: '$createdAt' }, month: { $month: '$createdAt' } }, count: { $sum: 1 } } },
-          { $sort: { '_id.year': 1, '_id.month': 1 } },
-        ],
-        // School coverage only needed for Cittaa admin — skip for everyone else
-        schoolCoverage: isCittaaAdmin ? [
-          { $group: { _id: '$schoolId', count: { $sum: 1 } } },
-          { $lookup: { from: 'schools', localField: '_id', foreignField: '_id', as: 'school' } },
-          { $unwind: { path: '$school', preserveNullAndEmptyArrays: false } },
-          { $project: { schoolName: '$school.name', schoolCode: '$school.code', count: 1 } },
-          { $sort: { count: -1 } },
-          { $limit: 10 },
-        ] : [{ $match: { $expr: { $eq: [0, 1] } } }],
-      },
-    },
+    { $facet: crFacetDef },
   ])
 
   // ── Query 2: Observation — all obs stats in ONE $facet ───────────────────
   // Replaces: 3 countDocuments + 3 aggregates = 6 round trips → 1
   // Only executed if the role actually sees observations
-  const obsFacetsPromise = showObs
-    ? Observation.aggregate([
-        { $match: obsFilter },
-        {
-          $facet: {
-            today:     [{ $match: { createdAt: { $gte: startOfDay } } }, { $count: 'n' }],
-            thisWeek:  [{ $match: { createdAt: { $gte: startOfWeek } } }, { $count: 'n' }],
-            thisMonth: [{ $match: { createdAt: { $gte: startOfMonth } } }, { $count: 'n' }],
-            byStatus:  [{ $group: { _id: '$status', count: { $sum: 1 } } }],
-            perSchool: isCittaaAdmin ? [
-              { $group: {
-                _id:       '$schoolId',
-                count:     { $sum: 1 },
-                escalated: { $sum: { $cond: [{ $eq: ['$status', 'ESCALATED'] }, 1, 0] } },
-                pending:   { $sum: { $cond: [{ $eq: ['$status', 'SHARED'] }, 1, 0] } },
-              }},
-              { $lookup: { from: 'schools', localField: '_id', foreignField: '_id', as: 'school' } },
-              { $unwind: { path: '$school', preserveNullAndEmptyArrays: true } },
-              { $project: { schoolName: '$school.name', schoolCode: '$school.code', count: 1, escalated: 1, pending: 1 } },
-              { $sort: { count: -1 } },
-              { $limit: 15 },
-            ] : [{ $match: { $expr: { $eq: [0, 1] } } }],
-            classBreakdown: isSchoolAdmin ? [
-              { $match: { createdAt: { $gte: startOfMonth } } },
-              { $lookup: { from: 'students', localField: 'studentId', foreignField: '_id', as: 'student' } },
-              { $unwind: { path: '$student', preserveNullAndEmptyArrays: true } },
-              { $group: {
-                _id:       { class: '$student.class', section: '$student.section' },
-                count:     { $sum: 1 },
-                escalated: { $sum: { $cond: [{ $eq: ['$status', 'ESCALATED'] }, 1, 0] } },
-                pending:   { $sum: { $cond: [{ $eq: ['$status', 'SHARED'] }, 1, 0] } },
-              }},
-              { $sort: { count: -1 } },
-            ] : [{ $match: { $expr: { $eq: [0, 1] } } }],
-          },
-        },
-      ])
-    : Promise.resolve([{}])
+  let obsFacetsPromise: Promise<any[]>
+  if (showObs) {
+    const obsFacetDef: Record<string, any[]> = {
+      today:     [{ $match: { createdAt: { $gte: startOfDay } } }, { $count: 'n' }],
+      thisWeek:  [{ $match: { createdAt: { $gte: startOfWeek } } }, { $count: 'n' }],
+      thisMonth: [{ $match: { createdAt: { $gte: startOfMonth } } }, { $count: 'n' }],
+      byStatus:  [{ $group: { _id: '$status', count: { $sum: 1 } } }],
+    }
+    if (isCittaaAdmin) {
+      obsFacetDef.perSchool = [
+        { $group: {
+          _id:       '$schoolId',
+          count:     { $sum: 1 },
+          escalated: { $sum: { $cond: { if: { $eq: ['$status', 'ESCALATED'] }, then: 1, else: 0 } } },
+          pending:   { $sum: { $cond: { if: { $eq: ['$status', 'SHARED'] },    then: 1, else: 0 } } },
+        }},
+        { $lookup: { from: 'schools', localField: '_id', foreignField: '_id', as: 'school' } },
+        { $unwind: { path: '$school', preserveNullAndEmptyArrays: true } },
+        { $project: { schoolName: '$school.name', schoolCode: '$school.code', count: 1, escalated: 1, pending: 1 } },
+        { $sort: { count: -1 } },
+        { $limit: 15 },
+      ]
+    }
+    if (isSchoolAdmin) {
+      obsFacetDef.classBreakdown = [
+        { $match: { createdAt: { $gte: startOfMonth } } },
+        { $lookup: { from: 'students', localField: 'studentId', foreignField: '_id', as: 'student' } },
+        { $unwind: { path: '$student', preserveNullAndEmptyArrays: true } },
+        { $group: {
+          _id:       { class: '$student.class', section: '$student.section' },
+          count:     { $sum: 1 },
+          escalated: { $sum: { $cond: { if: { $eq: ['$status', 'ESCALATED'] }, then: 1, else: 0 } } },
+          pending:   { $sum: { $cond: { if: { $eq: ['$status', 'SHARED'] },    then: 1, else: 0 } } },
+        }},
+        { $sort: { count: -1 } },
+      ]
+    }
+    obsFacetsPromise = Observation.aggregate([
+      { $match: obsFilter },
+      { $facet: obsFacetDef },
+    ])
+  } else {
+    obsFacetsPromise = Promise.resolve([{}])
+  }
 
   // ── Queries 3-5: Session, Assessment+RCI, School — still parallel ─────────
   const sessionFilter  = role === 'PSYCHOLOGIST'
