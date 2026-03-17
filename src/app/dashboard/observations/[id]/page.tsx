@@ -1,348 +1,296 @@
 'use client'
 import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import {
-  ArrowLeft, Eye, User, School, FileText,
-  ChevronRight, Calendar, Tag, Save,
+  ArrowLeft, AlertTriangle, CheckCircle2, XCircle,
+  ArrowUpCircle, Clock, RefreshCw, FileText, MessageSquare,
 } from 'lucide-react'
-import toast from 'react-hot-toast'
-import { cn, formatDate } from '@/lib/utils'
+import { cn } from '@/lib/utils'
 
-const BEHAVIOUR_LABELS: Record<string, string> = {
-  ACADEMIC:      'Academic',
-  SOCIAL:        'Social',
-  EMOTIONAL:     'Emotional',
-  BEHAVIOURAL:   'Behavioural',
-  PHYSICAL:      'Physical',
-  ATTENDANCE:    'Attendance',
-  OTHER:         'Other',
+type Obs = {
+  _id: string
+  studentId: { _id: string; name: string; class?: string; section?: string; rollNumber?: string; gender?: string } | null
+  conductedById: { _id: string; name: string; email: string } | null
+  classObserved: string; visitDate: string
+  behaviourFlags: string[]; observationNotes: string; recommendations: string
+  sharedWith: { _id: string; name: string; email: string; role: string }[]
+  sharedWithEmails: string[]
+  recommendEscalation: boolean; status: string
+  teacherResponse: string; declineReason: string
+  escalatedRequestId?: { _id: string; requestNumber: string; status: string } | null
+  createdAt: string; updatedAt: string
 }
 
-const SEVERITY_COLORS: Record<string, string> = {
-  LOW:      'bg-green-100 text-green-700',
-  MODERATE: 'bg-yellow-100 text-yellow-700',
-  HIGH:     'bg-orange-100 text-orange-700',
-  CRITICAL: 'bg-red-100 text-red-700',
+const S: Record<string, { label: string; cls: string; Icon: any }> = {
+  DRAFT:           { label: 'Draft',               cls: 'bg-slate-100 text-slate-600',   Icon: Clock },
+  AWAITING_REVIEW: { label: 'Awaiting Review',     cls: 'bg-yellow-100 text-yellow-700', Icon: AlertTriangle },
+  ACKNOWLEDGED:    { label: 'Acknowledged',        cls: 'bg-green-100 text-green-700',   Icon: CheckCircle2 },
+  ESCALATED:       { label: 'Escalated → Request', cls: 'bg-purple-100 text-purple-700', Icon: ArrowUpCircle },
+  DECLINED:        { label: 'Declined',            cls: 'bg-red-100 text-red-700',       Icon: XCircle },
 }
 
-export default function ObservationDetailPage() {
-  const { id }             = useParams<{ id: string }>()
-  const router             = useRouter()
-  const { data: session }  = useSession()
-  const role               = session?.user?.role || ''
+function Row({ label, value }: { label: string; value?: string|null }) {
+  return (
+    <div>
+      <p className="text-xs text-slate-400 font-medium mb-0.5">{label}</p>
+      <p className="text-sm text-slate-700 font-medium">{value || '—'}</p>
+    </div>
+  )
+}
 
-  const [data, setData]       = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving]   = useState(false)
+export default function ObsDetail({ params }: { params: { id: string } }) {
+  const router            = useRouter()
+  const { data: session } = useSession()
+  const [obs, setObs]     = useState<Obs|null>(null)
+  const [loading, setLoading]   = useState(true)
+  const [err, setErr]           = useState('')
+  const [actLoad, setActLoad]   = useState<string|null>(null)
+  const [note, setNote]         = useState('')
+  const [decReason, setDecReason] = useState('')
+  const [showDec, setShowDec]   = useState(false)
 
-  // Editable
-  const [notes, setNotes]           = useState('')
-  const [followUp, setFollowUp]     = useState('')
-  const [actionTaken, setAction]    = useState('')
-
-  const isPsychologist = role === 'PSYCHOLOGIST'
-  const isAdmin        = ['CITTAA_ADMIN', 'CITTAA_SUPPORT'].includes(role)
-  const isTeacher      = ['CLASS_TEACHER', 'COORDINATOR'].includes(role)
-  const isPrincipal    = ['SCHOOL_PRINCIPAL', 'SCHOOL_ADMIN'].includes(role)
-
-  // Psychologists and admins can add follow-up notes; original author can edit
-  const canAddFollowUp = isPsychologist || isAdmin
-  const canViewDetails = isPsychologist || isAdmin || isTeacher || isPrincipal
+  const role   = session?.user?.role ?? ''
+  const userId = session?.user?.id   ?? ''
 
   useEffect(() => {
-    fetch(`/api/observations/${id}`)
-      .then((r) => r.json())
-      .then((d) => {
-        const obs = d.observation
-        if (!obs) return
-        setData(obs)
-        setNotes(obs.psychologistNotes || '')
-        setFollowUp(obs.followUpPlan || '')
-        setAction(obs.actionTaken || '')
-      })
+    fetch(`/api/observations/${params.id}?_t=${Date.now()}`)
+      .then(r => r.json())
+      .then(d => { if (d.observation) setObs(d.observation); else setErr('Not found') })
+      .catch(() => setErr('Could not load'))
       .finally(() => setLoading(false))
-  }, [id])
+  }, [params.id])
 
-  async function handleSave() {
-    setSaving(true)
+  const act = async (action: string, extra?: object) => {
+    if (actLoad) return
+    setActLoad(action); setErr('')
     try {
-      const res    = await fetch(`/api/observations/${id}`, {
-        method:  'PATCH',
+      const res  = await fetch(`/api/observations/${params.id}`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body:    JSON.stringify({
-          psychologistNotes: notes,
-          followUpPlan:      followUp,
-          actionTaken:       actionTaken,
-        }),
+        body: JSON.stringify({ action, ...extra }),
       })
-      const result = await res.json()
-      if (res.ok) {
-        toast.success('Observation updated')
-        setData(result.observation)
-      } else {
-        toast.error(result.error || 'Update failed')
-      }
-    } finally {
-      setSaving(false)
-    }
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Action failed')
+      setObs(data.observation)
+    } catch (e: any) { setErr(e.message) }
+    finally { setActLoad(null) }
   }
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full" />
-      </div>
-    )
-  }
+  if (loading) return <div className="flex items-center justify-center h-64 text-slate-400"><RefreshCw size={18} className="animate-spin mr-2"/>Loading…</div>
+  if (!obs)    return <div className="p-6 text-center text-red-600">{err || 'Observation not found'}</div>
 
-  if (!data) {
-    return (
-      <div className="text-center py-20 text-slate-500">
-        Observation not found.{' '}
-        <Link href="/dashboard/observations" className="text-purple-600 hover:underline">Back</Link>
-      </div>
-    )
-  }
+  const cfg    = S[obs.status] ?? S.DRAFT
+  const CfgIcon = cfg.Icon
+  const stu    = obs.studentId
+  const psych  = obs.conductedById
 
-  const student    = data.studentId    || {}
-  const observer   = data.observedById || data.createdById || {}
-  const school     = data.schoolId     || {}
-  const request    = data.requestId    || {}
+  const isPsych    = ['PSYCHOLOGIST','CITTAA_ADMIN','CITTAA_SUPPORT'].includes(role)
+  const isReviewer = ['SCHOOL_PRINCIPAL','SCHOOL_ADMIN','CLASS_TEACHER','COORDINATOR'].includes(role)
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="p-6 space-y-6 max-w-4xl">
       {/* Header */}
       <div className="flex items-center gap-3">
         <button onClick={() => router.back()}
-          className="p-2 rounded-lg hover:bg-slate-100 text-slate-500 transition-colors">
-          <ArrowLeft size={18} />
+          className="w-9 h-9 flex items-center justify-center rounded-xl border border-slate-200 hover:bg-slate-100 transition">
+          <ArrowLeft size={16}/>
         </button>
         <div className="flex-1">
-          <h1 className="text-xl font-semibold text-slate-900">Observation Detail</h1>
-          <div className="flex items-center gap-2 mt-0.5 text-sm text-slate-500">
-            <Link href="/dashboard/observations" className="hover:text-purple-600">Observations</Link>
-            <ChevronRight size={14} />
-            <span>{formatDate(data.observationDate || data.createdAt)}</span>
-          </div>
+          <h1 className="text-xl font-bold text-slate-900">Classroom Observation</h1>
+          <p className="text-slate-500 text-sm">{psych?.name ?? '—'} · {obs.visitDate ? new Date(obs.visitDate).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}) : '—'}</p>
         </div>
-        {data.severity && (
-          <span className={cn('badge', SEVERITY_COLORS[data.severity] || 'bg-slate-100 text-slate-600')}>
-            {data.severity}
-          </span>
-        )}
+        <span className={cn('inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-sm font-semibold', cfg.cls)}>
+          <CfgIcon size={13}/> {cfg.label}
+        </span>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-        {/* Main */}
+      {err && <div className="rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">{err}</div>}
+
+      {obs.status === 'ESCALATED' && obs.escalatedRequestId && (
+        <div className="rounded-xl bg-purple-50 border border-purple-200 p-4 flex items-start gap-3">
+          <ArrowUpCircle size={18} className="text-purple-600 mt-0.5 shrink-0"/>
+          <div>
+            <p className="text-purple-800 font-semibold text-sm">Escalated to Counselling Request</p>
+            <p className="text-purple-600 text-sm mt-0.5">
+              Request{' '}
+              <Link href={`/dashboard/requests/${obs.escalatedRequestId._id}`} className="font-bold underline">
+                {obs.escalatedRequestId.requestNumber}
+              </Link>{' '}
+              created successfully.
+            </p>
+          </div>
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-5">
 
-          {/* Observation content */}
-          <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
-            <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-              <Eye size={16} className="text-purple-600" /> Observation
-            </h2>
+          {/* Student */}
+          <div className="rounded-2xl border border-slate-200 p-5 space-y-3">
+            <h2 className="font-semibold text-slate-800 text-sm">Student</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <Row label="Name"     value={stu?.name} />
+              <Row label="Roll No." value={stu?.rollNumber} />
+              <Row label="Class"    value={[stu?.class, stu?.section].filter(Boolean).join(' ') || null} />
+              <Row label="Gender"   value={stu?.gender} />
+            </div>
+          </div>
 
-            {/* Category tags */}
-            {data.categories?.length > 0 && (
+          {/* Visit */}
+          <div className="rounded-2xl border border-slate-200 p-5 space-y-3">
+            <h2 className="font-semibold text-slate-800 text-sm">Visit Details</h2>
+            <div className="grid grid-cols-2 gap-3">
+              <Row label="Class Observed" value={obs.classObserved} />
+              <Row label="Visit Date"     value={obs.visitDate ? new Date(obs.visitDate).toLocaleDateString('en-IN',{day:'numeric',month:'long',year:'numeric'}) : null} />
+              <Row label="Conducted By"   value={psych?.name} />
+              <Row label="Escalation Rec." value={obs.recommendEscalation ? 'Yes' : 'No'} />
+            </div>
+          </div>
+
+          {/* Flags */}
+          <div className="rounded-2xl border border-slate-200 p-5 space-y-3">
+            <h2 className="font-semibold text-slate-800 text-sm">Behaviour Flags</h2>
+            {obs.behaviourFlags?.length > 0 ? (
               <div className="flex flex-wrap gap-2">
-                {data.categories.map((cat: string) => (
-                  <span key={cat}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-medium border border-purple-100">
-                    <Tag size={10} />
-                    {BEHAVIOUR_LABELS[cat] || cat}
+                {obs.behaviourFlags.map(f => (
+                  <span key={f} className="inline-flex items-center gap-1.5 bg-orange-100 text-orange-700 text-sm font-medium px-3 py-1 rounded-full border border-orange-200">
+                    <AlertTriangle size={11}/> {f}
                   </span>
                 ))}
               </div>
-            )}
-
-            {/* Main observation text */}
-            <div>
-              <div className="text-slate-400 text-xs font-medium mb-1">Description</div>
-              <p className="text-slate-700 text-sm whitespace-pre-wrap leading-relaxed">
-                {data.description || data.observationText || '—'}
-              </p>
-            </div>
-
-            {/* Context */}
-            {data.context && (
-              <div>
-                <div className="text-slate-400 text-xs font-medium mb-1">Context / Setting</div>
-                <p className="text-slate-700 text-sm">{data.context}</p>
-              </div>
-            )}
-
-            {/* Linked request */}
-            {request._id && (
-              <div className="pt-3 border-t border-slate-100">
-                <div className="text-slate-400 text-xs font-medium mb-1">Linked Counselling Request</div>
-                <Link href={`/dashboard/requests/${request._id}`}
-                  className="inline-flex items-center gap-1.5 text-purple-600 hover:text-purple-700 text-sm font-medium">
-                  <FileText size={14} />
-                  {request.requestNumber || 'View Request'}
-                  <ChevronRight size={13} />
-                </Link>
-              </div>
-            )}
+            ) : <p className="text-slate-400 text-sm">No flags recorded</p>}
           </div>
 
-          {/* Teacher's original note (if submitted by teacher) */}
-          {data.teacherNote && (
-            <div className="bg-slate-50 rounded-xl border border-slate-200 p-4">
-              <div className="text-slate-500 text-xs font-medium mb-2">Teacher's Note</div>
-              <p className="text-slate-700 text-sm whitespace-pre-wrap leading-relaxed">{data.teacherNote}</p>
+          {/* Observation Notes */}
+          <div className="rounded-2xl border border-slate-200 p-5 space-y-3">
+            <h2 className="font-semibold text-slate-800 text-sm flex items-center gap-2"><FileText size={14} className="text-blue-500"/> Observation Notes</h2>
+            {obs.observationNotes
+              ? <p className="text-slate-700 text-sm leading-relaxed whitespace-pre-wrap">{obs.observationNotes}</p>
+              : <p className="text-slate-400 text-sm italic">No notes recorded</p>}
+          </div>
+
+          {/* Recommendations */}
+          {obs.recommendations && (
+            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-5 space-y-2">
+              <h2 className="font-semibold text-blue-800 text-sm flex items-center gap-2"><MessageSquare size={14}/> Psychologist's Recommendations</h2>
+              <p className="text-blue-700 text-sm leading-relaxed whitespace-pre-wrap">{obs.recommendations}</p>
             </div>
           )}
 
-          {/* Psychologist / follow-up section */}
-          {canAddFollowUp && (
-            <div className="bg-white rounded-xl border border-slate-200 p-5 space-y-4">
-              <h2 className="font-semibold text-slate-800 flex items-center gap-2">
-                <FileText size={16} className="text-indigo-600" /> Psychologist Notes & Follow-up
-              </h2>
-
-              <div>
-                <label className="form-label">Psychologist Notes</label>
-                <textarea value={notes} onChange={(e) => setNotes(e.target.value)}
-                  rows={4}
-                  placeholder="Professional assessment, interpretations, clinical observations..."
-                  className="form-textarea w-full"
-                />
-              </div>
-
-              <div>
-                <label className="form-label">Action Taken</label>
-                <textarea value={actionTaken} onChange={(e) => setAction(e.target.value)}
-                  rows={3}
-                  placeholder="Steps taken or interventions implemented so far..."
-                  className="form-textarea w-full"
-                />
-              </div>
-
-              <div>
-                <label className="form-label">Follow-up Plan</label>
-                <textarea value={followUp} onChange={(e) => setFollowUp(e.target.value)}
-                  rows={3}
-                  placeholder="Planned interventions, referrals, or next steps..."
-                  className="form-textarea w-full"
-                />
-              </div>
-
-              <button onClick={handleSave} disabled={saving}
-                className="btn-primary w-full justify-center">
-                {saving ? (
-                  <>
-                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
-                      <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" className="opacity-25"/>
-                      <path fill="currentColor" className="opacity-75" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z"/>
-                    </svg>
-                    Saving…
-                  </>
-                ) : (
-                  <><Save size={15} /> Save Notes</>
-                )}
-              </button>
+          {/* Teacher response */}
+          {obs.teacherResponse && (
+            <div className="rounded-2xl border border-green-100 bg-green-50 p-5 space-y-2">
+              <h2 className="font-semibold text-green-800 text-sm">Teacher / Coordinator Response</h2>
+              <p className="text-green-700 text-sm whitespace-pre-wrap">{obs.teacherResponse}</p>
             </div>
           )}
 
-          {/* Read-only psychologist notes (for non-psychologist roles) */}
-          {!canAddFollowUp && (data.psychologistNotes || data.actionTaken || data.followUpPlan) && (
-            <div className="bg-indigo-50 rounded-xl border border-indigo-200 p-5 space-y-3">
-              <h2 className="font-semibold text-indigo-800 text-sm">Psychologist Notes</h2>
-              {data.psychologistNotes && (
-                <div>
-                  <div className="text-indigo-600 text-xs font-medium mb-1">Notes</div>
-                  <p className="text-indigo-900 text-sm whitespace-pre-wrap">{data.psychologistNotes}</p>
-                </div>
-              )}
-              {data.actionTaken && (
-                <div>
-                  <div className="text-indigo-600 text-xs font-medium mb-1">Action Taken</div>
-                  <p className="text-indigo-900 text-sm">{data.actionTaken}</p>
-                </div>
-              )}
-              {data.followUpPlan && (
-                <div>
-                  <div className="text-indigo-600 text-xs font-medium mb-1">Follow-up Plan</div>
-                  <p className="text-indigo-900 text-sm">{data.followUpPlan}</p>
-                </div>
-              )}
+          {/* Decline reason */}
+          {obs.declineReason && (
+            <div className="rounded-2xl border border-red-100 bg-red-50 p-5 space-y-2">
+              <h2 className="font-semibold text-red-800 text-sm">Decline Reason</h2>
+              <p className="text-red-700 text-sm whitespace-pre-wrap">{obs.declineReason}</p>
             </div>
           )}
         </div>
 
-        {/* Sidebar */}
-        <div className="space-y-4">
-          {/* Student */}
-          <div className="bg-white rounded-xl border border-slate-200 p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <User size={15} className="text-purple-600" />
-              </div>
-              <div className="text-sm font-semibold text-slate-700">Student</div>
-            </div>
-            <div className="text-sm space-y-1">
-              <div className="font-medium text-slate-900">{student.name || '—'}</div>
-              {student.class && (
-                <div className="text-slate-500">
-                  Class {student.class}{student.section ? ` – ${student.section}` : ''}
+        {/* Right column */}
+        <div className="space-y-5">
+          {/* Shared with */}
+          <div className="rounded-2xl border border-slate-200 p-5 space-y-3">
+            <h2 className="font-semibold text-slate-800 text-sm">Shared With</h2>
+            {obs.sharedWith?.length > 0 ? (
+              obs.sharedWith.map(u => (
+                <div key={u._id} className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full bg-purple-100 flex items-center justify-center text-purple-700 text-xs font-bold">
+                    {u.name.split(' ').map(n=>n[0]).join('').slice(0,2)}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-slate-700">{u.name}</p>
+                    <p className="text-xs text-slate-400">{u.role}</p>
+                  </div>
                 </div>
-              )}
-              {student.rollNumber && (
-                <div className="text-slate-400 text-xs">Roll: {student.rollNumber}</div>
-              )}
-            </div>
+              ))
+            ) : obs.sharedWithEmails?.length > 0 ? (
+              obs.sharedWithEmails.map(e => <p key={e} className="text-sm text-slate-600">{e}</p>)
+            ) : (
+              <p className="text-slate-400 text-sm">Not shared yet</p>
+            )}
           </div>
 
-          {/* Observer */}
-          <div className="bg-white rounded-xl border border-slate-200 p-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                <User size={15} className="text-purple-600" />
+          {/* Action panel */}
+          <div className="rounded-2xl border border-slate-200 p-5 space-y-3">
+            <h2 className="font-semibold text-slate-800 text-sm">Actions</h2>
+
+            {/* Psychologist: recommend */}
+            {isPsych && obs.status === 'DRAFT' && (
+              <div className="space-y-2">
+                <p className="text-xs text-slate-500">Send observation to teacher/coordinator for review:</p>
+                <button onClick={() => act('recommend')} disabled={!!actLoad}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-orange-500 hover:bg-orange-600 text-white text-sm font-semibold transition disabled:opacity-60">
+                  {actLoad === 'recommend' ? <RefreshCw size={13} className="animate-spin"/> : <AlertTriangle size={13}/>}
+                  {actLoad === 'recommend' ? 'Sending…' : '⚠ Recommend Escalation'}
+                </button>
               </div>
-              <div className="text-sm font-semibold text-slate-700">Observed By</div>
-            </div>
-            <div className="text-sm space-y-1">
-              <div className="font-medium text-slate-900">{observer.name || '—'}</div>
-              <div className="text-slate-500 text-xs capitalize">{observer.role?.replace(/_/g, ' ') || ''}</div>
-              <div className="text-slate-400 text-xs">{observer.email}</div>
-            </div>
+            )}
+
+            {/* Reviewer: escalate / acknowledge / decline */}
+            {isReviewer && obs.status === 'AWAITING_REVIEW' && (
+              <div className="space-y-3">
+                <p className="text-xs text-slate-500">Psychologist recommends a counselling session:</p>
+                <textarea rows={3} placeholder="Add a response note (optional)…" value={note}
+                  onChange={e => setNote(e.target.value)}
+                  className="w-full border border-slate-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 resize-none"/>
+
+                <button onClick={() => act('escalate', { teacherResponse: note })} disabled={!!actLoad}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-white text-sm font-semibold transition disabled:opacity-60">
+                  {actLoad === 'escalate' ? <RefreshCw size={13} className="animate-spin"/> : <ArrowUpCircle size={13}/>}
+                  {actLoad === 'escalate' ? 'Creating Request…' : 'Escalate → Create Request'}
+                </button>
+
+                <button onClick={() => act('acknowledge', { teacherResponse: note })} disabled={!!actLoad}
+                  className="w-full flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm font-semibold transition disabled:opacity-60">
+                  {actLoad === 'acknowledge' ? <RefreshCw size={13} className="animate-spin"/> : <CheckCircle2 size={13}/>}
+                  {actLoad === 'acknowledge' ? 'Saving…' : 'Acknowledge — No Action Needed'}
+                </button>
+
+                {!showDec ? (
+                  <button onClick={() => setShowDec(true)}
+                    className="w-full px-4 py-2 rounded-xl border border-red-200 text-red-600 hover:bg-red-50 text-sm font-medium transition">
+                    Decline
+                  </button>
+                ) : (
+                  <div className="space-y-2">
+                    <textarea rows={2} placeholder="Reason for declining…" value={decReason}
+                      onChange={e => setDecReason(e.target.value)}
+                      className="w-full border border-red-200 rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-red-400 resize-none"/>
+                    <div className="flex gap-2">
+                      <button onClick={() => act('decline', { declineReason: decReason, teacherResponse: note })}
+                        disabled={!!actLoad || !decReason.trim()}
+                        className="flex-1 px-3 py-2 rounded-xl bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-60 transition">
+                        {actLoad === 'decline' ? 'Declining…' : 'Confirm Decline'}
+                      </button>
+                      <button onClick={() => setShowDec(false)}
+                        className="px-3 py-2 rounded-xl border border-slate-200 text-slate-600 text-sm hover:bg-slate-100 transition">
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {['ACKNOWLEDGED','ESCALATED','DECLINED'].includes(obs.status) && (
+              <p className="text-xs text-slate-400 text-center py-1">No further actions available</p>
+            )}
           </div>
 
-          {/* School */}
-          {school.name && (
-            <div className="bg-white rounded-xl border border-slate-200 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <School size={15} className="text-green-600" />
-                </div>
-                <div className="text-sm font-semibold text-slate-700">School</div>
-              </div>
-              <div className="text-sm">
-                <div className="font-medium text-slate-900">{school.name}</div>
-                {school.city && <div className="text-slate-500">{school.city}</div>}
-              </div>
-            </div>
-          )}
-
-          {/* Timeline */}
-          <div className="bg-white rounded-xl border border-slate-200 p-4">
-            <div className="text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-              <Calendar size={14} className="text-slate-400" /> Timeline
-            </div>
-            <div className="space-y-2 text-xs text-slate-500">
-              <div className="flex justify-between">
-                <span>Observed</span>
-                <span className="text-slate-700">{formatDate(data.observationDate || data.createdAt)}</span>
-              </div>
-              {data.updatedAt && data.updatedAt !== data.createdAt && (
-                <div className="flex justify-between">
-                  <span>Last Updated</span>
-                  <span className="text-slate-700">{formatDate(data.updatedAt)}</span>
-                </div>
-              )}
-            </div>
+          {/* Meta */}
+          <div className="rounded-2xl border border-slate-100 bg-slate-50 p-4 space-y-1.5 text-xs text-slate-500">
+            <p><span className="font-medium">Created:</span> {new Date(obs.createdAt).toLocaleString('en-IN')}</p>
+            <p><span className="font-medium">Updated:</span> {new Date(obs.updatedAt).toLocaleString('en-IN')}</p>
           </div>
         </div>
       </div>

@@ -1,92 +1,56 @@
-import mongoose, { Schema, Document, Model } from 'mongoose'
+import mongoose, { Document, Schema } from 'mongoose'
 
-/**
- * Classroom Observation
- * ─────────────────────
- * Flow:
- *   Psychologist visits class → records observations for a student
- *   → sends to class teacher / coordinator → they review & either:
- *     a) Approve → auto-creates a CounselingRequest (PENDING_APPROVAL)
- *     b) Acknowledge only (no escalation needed)
- *     c) Add a comment / clarification
- */
-
-export type ObservationStatus =
-  | 'DRAFT'                // Psychologist saving notes, not yet shared
-  | 'SHARED'               // Sent to teacher/coordinator, awaiting review
-  | 'ACKNOWLEDGED'         // Teacher reviewed, no escalation needed
-  | 'ESCALATED'            // Teacher approved → CounselingRequest created
-  | 'DECLINED'             // Teacher declined escalation with reason
-
-export interface IObservationDoc extends Document {
-  _id: mongoose.Types.ObjectId
-  studentId:       mongoose.Types.ObjectId
-  schoolId:        mongoose.Types.ObjectId
-  psychologistId:  mongoose.Types.ObjectId       // who observed
-
-  // Observation details
-  classVisitDate:  Date
-  classObserved:   string                         // e.g. "Class 8-A Math period"
-  observations:    string                         // Detailed notes from the classroom
-  behaviourFlags:  string[]                       // quick tags: ['withdrawn', 'aggressive', 'inattentive', ...]
-  recommendEscalation: boolean                    // psychologist recommends formal counselling
-
-  // Routing
-  sharedWithId?:   mongoose.Types.ObjectId        // teacher/coordinator it was shared with
-  sharedAt?:       Date
-
-  // Teacher / coordinator response
-  status:          ObservationStatus
-  reviewedById?:   mongoose.Types.ObjectId
-  reviewNote?:     string                         // Teacher's comment
-  reviewedAt?:     Date
-
-  // If escalated — link to the created request
-  counsellingRequestId?: mongoose.Types.ObjectId
-
-  createdAt: Date
-  updatedAt: Date
+export interface IObservation extends Document {
+  studentId:           mongoose.Types.ObjectId
+  schoolId:            mongoose.Types.ObjectId
+  conductedById:       mongoose.Types.ObjectId
+  classObserved:       string
+  visitDate:           Date
+  behaviourFlags:      string[]
+  observationNotes:    string
+  recommendations:     string
+  sharedWith:          mongoose.Types.ObjectId[]
+  sharedWithEmails:    string[]
+  recommendEscalation: boolean
+  status:              'DRAFT' | 'AWAITING_REVIEW' | 'ACKNOWLEDGED' | 'ESCALATED' | 'DECLINED'
+  teacherResponse:     string
+  declineReason:       string
+  escalatedRequestId?: mongoose.Types.ObjectId
+  isConfidential:      boolean
+  createdAt:           Date
+  updatedAt:           Date
 }
 
-const ObservationSchema = new Schema<IObservationDoc>(
+const ObservationSchema = new Schema<IObservation>(
   {
-    studentId:       { type: Schema.Types.ObjectId, ref: 'Student',            required: true },
-    schoolId:        { type: Schema.Types.ObjectId, ref: 'School',             required: true },
-    psychologistId:  { type: Schema.Types.ObjectId, ref: 'User',               required: true },
-
-    classVisitDate:  { type: Date, required: true, default: Date.now },
-    classObserved:   { type: String, required: true },
-    observations:    { type: String, required: true },
-    behaviourFlags:  [{ type: String }],
+    studentId:        { type: Schema.Types.ObjectId, ref: 'Student', required: true },
+    schoolId:         { type: Schema.Types.ObjectId, ref: 'School',  required: true },
+    conductedById:    { type: Schema.Types.ObjectId, ref: 'User',    required: true },
+    classObserved:    { type: String, required: true, trim: true },
+    visitDate:        { type: Date, required: true },
+    behaviourFlags:   { type: [String], default: [] },
+    observationNotes: { type: String, default: '' },
+    recommendations:  { type: String, default: '' },
+    sharedWith:       [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    sharedWithEmails: { type: [String], default: [] },
     recommendEscalation: { type: Boolean, default: false },
-
-    sharedWithId:    { type: Schema.Types.ObjectId, ref: 'User' },
-    sharedAt:        { type: Date },
-
-    status:          {
+    status: {
       type: String,
-      enum: ['DRAFT', 'SHARED', 'ACKNOWLEDGED', 'ESCALATED', 'DECLINED'],
+      enum: ['DRAFT','AWAITING_REVIEW','ACKNOWLEDGED','ESCALATED','DECLINED'],
       default: 'DRAFT',
     },
-    reviewedById:    { type: Schema.Types.ObjectId, ref: 'User' },
-    reviewNote:      { type: String },
-    reviewedAt:      { type: Date },
-
-    counsellingRequestId: { type: Schema.Types.ObjectId, ref: 'CounselingRequest' },
+    teacherResponse:    { type: String, default: '' },
+    declineReason:      { type: String, default: '' },
+    escalatedRequestId: { type: Schema.Types.ObjectId, ref: 'CounselingRequest' },
+    isConfidential:     { type: Boolean, default: false },
   },
   { timestamps: true }
 )
 
-ObservationSchema.index({ schoolId: 1, status: 1, createdAt: -1 })
-ObservationSchema.index({ psychologistId: 1, createdAt: -1 })
-ObservationSchema.index({ sharedWithId: 1, status: 1 })
+ObservationSchema.index({ schoolId: 1, status: 1 })
+ObservationSchema.index({ conductedById: 1, status: 1 })
 ObservationSchema.index({ studentId: 1 })
-// Standalone createdAt index for fast date-range $facet sub-pipelines
-// (today / thisWeek / thisMonth filters in the dashboard stats aggregation)
 ObservationSchema.index({ createdAt: -1 })
 
-const Observation: Model<IObservationDoc> =
-  mongoose.models.Observation ||
-  mongoose.model<IObservationDoc>('Observation', ObservationSchema)
-
-export default Observation
+export default mongoose.models.Observation as mongoose.Model<IObservation>
+  || mongoose.model<IObservation>('Observation', ObservationSchema)
