@@ -3,18 +3,18 @@ import { NextResponse } from 'next/server'
 
 export default withAuth(
   function middleware(req) {
-    const token    = req.nextauth.token
-    const pathname = req.nextUrl.pathname
-    if (token && pathname === '/login') {
-      return NextResponse.redirect(new URL('/dashboard', req.url))
-    }
+    // Only runs on /dashboard/* — login page is NOT in the matcher
+    // so no redirect loop is possible between middleware and /login
     return NextResponse.next()
   },
   {
     callbacks: {
       authorized: ({ token, req }) => {
-        const { pathname } = req.nextUrl
-        if (pathname.startsWith('/dashboard')) return !!token
+        // Protect every dashboard route — unauthenticated → NextAuth
+        // will redirect to /login?callbackUrl=... automatically
+        if (req.nextUrl.pathname.startsWith('/dashboard')) {
+          return !!token
+        }
         return true
       },
     },
@@ -23,5 +23,10 @@ export default withAuth(
 )
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login'],
+  // ONLY match dashboard routes — do NOT include /login
+  // If /login is in the matcher, withAuth can create a redirect loop:
+  //   middleware blocks /dashboard → redirects to /login
+  //   client session fires → redirects back to /dashboard
+  //   middleware blocks again → back to /login → infinite blink
+  matcher: ['/dashboard/:path*'],
 }
