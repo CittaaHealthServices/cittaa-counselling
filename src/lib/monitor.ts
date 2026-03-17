@@ -40,6 +40,33 @@ function isCircuitOpen(route: string, count: number): boolean {
   return count >= CIRCUIT_THRESHOLD
 }
 
+// ── logError: structured console logging (used by auth.ts and others) ─────────
+type LogErrorPayload = {
+  route:     string
+  method?:   string
+  message:   string
+  userId?:   string
+  userEmail?: string
+  userRole?:  string
+  metadata?:  Record<string, unknown>
+}
+
+export async function logError(
+  code: string,
+  payload: LogErrorPayload
+): Promise<void> {
+  console.error(
+    `[Monitor] ${code} | ${payload.method ?? 'SYSTEM'} ${payload.route} — ${payload.message}`,
+    payload.metadata ?? ''
+  )
+  // Track in in-process stats so health endpoint can surface it
+  const stats = _routeStats.get(payload.route) ?? { errors: 0, lastError: '', lastAt: new Date() }
+  stats.errors++
+  stats.lastError = payload.message
+  stats.lastAt    = new Date()
+  _routeStats.set(payload.route, stats)
+}
+
 // ── Main wrapper ──────────────────────────────────────────────────────────────
 type Handler = (req: NextRequest, ctx?: any) => Promise<NextResponse>
 
