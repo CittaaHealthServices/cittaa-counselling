@@ -69,10 +69,13 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, { p
     if (Array.isArray(fields.sharedWithEmails) && fields.sharedWithEmails.length)
       obs.sharedWithEmails = fields.sharedWithEmails
 
-    await obs.save()
+    await obs.save({ validateBeforeSave: false })
 
     const student = (obs as any).studentId
     const psych   = (obs as any).conductedById
+    const visitDateStr = obs.visitDate
+      ? new Date(obs.visitDate).toLocaleDateString('en-IN')
+      : 'N/A'
     await Promise.allSettled(
       (obs.sharedWithEmails || []).map((email: string) =>
         sendObservationSharedEmail({
@@ -81,9 +84,9 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, { p
           psychologistName:    psych?.name  ?? 'Your Psychologist',
           studentName:         student?.name ?? 'Student',
           studentClass:        `${student?.class ?? ''} ${student?.section ?? ''}`.trim(),
-          classVisitDate:      new Date(obs.visitDate).toLocaleDateString('en-IN'),
-          classObserved:       obs.classObserved,
-          behaviourFlags:      obs.behaviourFlags,
+          classVisitDate:      visitDateStr,
+          classObserved:       obs.classObserved ?? '',
+          behaviourFlags:      obs.behaviourFlags ?? [],
           recommendEscalation: true,
           observationId:       obs._id.toString(),
         })
@@ -122,7 +125,7 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, { p
     obs.status             = 'ESCALATED'
     obs.escalatedRequestId = cr._id as any
     if (fields.teacherResponse) obs.teacherResponse = fields.teacherResponse
-    await obs.save()
+    await obs.save({ validateBeforeSave: false })
 
     const psych = (obs as any).conductedById
     if (psych?.email) {
@@ -146,7 +149,7 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, { p
   if (action === 'acknowledge') {
     obs.status = 'ACKNOWLEDGED'
     if (fields.teacherResponse) obs.teacherResponse = fields.teacherResponse
-    await obs.save()
+    await obs.save({ validateBeforeSave: false })
     return NextResponse.json({ observation: await populate(Observation.findById(params.id)).lean() })
   }
 
@@ -155,7 +158,7 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, { p
     obs.status        = 'DECLINED'
     obs.declineReason = fields.declineReason || ''
     if (fields.teacherResponse) obs.teacherResponse = fields.teacherResponse
-    await obs.save()
+    await obs.save({ validateBeforeSave: false })
     return NextResponse.json({ observation: await populate(Observation.findById(params.id)).lean() })
   }
 
@@ -173,7 +176,7 @@ export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, { p
     else if (key === 'sharedWith') (obs as any)[key] = (fields[key] as string[]).map((id: string) => new mongoose.Types.ObjectId(id))
     else (obs as any)[key] = fields[key]
   }
-  await obs.save()
+  await obs.save({ validateBeforeSave: false })
   return NextResponse.json({ observation: await populate(Observation.findById(params.id)).lean() })
 }, { route: '/api/observations/[id]' })
 

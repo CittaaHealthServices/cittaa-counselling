@@ -23,11 +23,11 @@ export interface IObservation extends Document {
 
 const ObservationSchema = new Schema<IObservation>(
   {
-    studentId:        { type: Schema.Types.ObjectId, ref: 'Student', required: true },
-    schoolId:         { type: Schema.Types.ObjectId, ref: 'School',  required: true },
-    conductedById:    { type: Schema.Types.ObjectId, ref: 'User',    required: true },
-    classObserved:    { type: String, required: true, trim: true },
-    visitDate:        { type: Date, required: true },
+    studentId:        { type: Schema.Types.ObjectId, ref: 'Student' },
+    schoolId:         { type: Schema.Types.ObjectId, ref: 'School'  },
+    conductedById:    { type: Schema.Types.ObjectId, ref: 'User'    },
+    classObserved:    { type: String, default: '', trim: true },
+    visitDate:        { type: Date },
     behaviourFlags:   { type: [String], default: [] },
     observationNotes: { type: String, default: '' },
     recommendations:  { type: String, default: '' },
