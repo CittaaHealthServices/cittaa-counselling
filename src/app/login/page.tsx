@@ -60,8 +60,11 @@ export default function LoginPage() {
     if (result?.error) {
       setError('Invalid email or password. Please try again.')
       setLoading(false)
+    } else {
+      // Sign-in succeeded — redirect immediately, don't wait for useSession to update
+      sessionStorage.removeItem('_ra')
+      window.location.replace(getCallbackUrl())
     }
-    // On success: session flips to 'authenticated', useEffect redirects
   }
 
   // Show spinner while session is being checked or while signing out stale session
