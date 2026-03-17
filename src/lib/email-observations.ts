@@ -14,14 +14,14 @@ function base(content: string, title: string) {
   <style>
     body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f1f5f9;margin:0;padding:20px}
     .wrap{max-width:560px;margin:0 auto;background:#fff;border-radius:12px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,.08)}
-    .hdr{background:#2563EB;padding:20px 28px}.hdr-logo{color:#fff;font-size:18px;font-weight:700}
-    .hdr-sub{color:#bfdbfe;font-size:12px;margin-top:3px}
+    .hdr{background:#7c3aed;padding:20px 28px}.hdr-logo{color:#fff;font-size:18px;font-weight:700}
+    .hdr-sub{color:#ddd6fe;font-size:12px;margin-top:3px}
     .bdy{padding:24px 28px}.ttl{font-size:17px;font-weight:600;color:#0f172a;margin:0 0 10px}
     .txt{font-size:13px;color:#475569;line-height:1.7;margin:0 0 14px}
     .box{background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:14px;margin:14px 0}
     .row{display:flex;justify-content:space-between;margin-bottom:7px}
     .lbl{font-size:11px;color:#94a3b8;font-weight:500}.val{font-size:12px;color:#1e293b;font-weight:600;text-align:right}
-    .btn{display:inline-block;background:#2563EB;color:#fff;padding:11px 22px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;margin-top:6px}
+    .btn{display:inline-block;background:#7c3aed;color:#fff;padding:11px 22px;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;margin-top:6px}
     .ftr{background:#f8fafc;padding:14px 28px;text-align:center;font-size:11px;color:#94a3b8}
     .badge-purple{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:#ede9fe;color:#6d28d9}
     .badge-orange{display:inline-block;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;background:#ffedd5;color:#c2410c}

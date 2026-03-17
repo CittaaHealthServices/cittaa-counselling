@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { Suspense, useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useSearchParams, useRouter } from 'next/navigation'
@@ -42,7 +42,8 @@ const MODE_ICON: Record<string, JSX.Element> = {
   HYBRID:  <Monitor size={12} />,
 }
 
-export default function WorkshopsPage() {
+// Inner component uses useSearchParams — must be inside Suspense
+function WorkshopsContent() {
   const { data: session } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -90,10 +91,6 @@ export default function WorkshopsPage() {
         w.targetGroup?.toLowerCase().includes(search.toLowerCase())
       )
     : workshops
-
-  const formatDate = (d?: string) => d
-    ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
-    : '—'
 
   return (
     <div className="space-y-6">
@@ -315,5 +312,18 @@ export default function WorkshopsPage() {
         )}
       </div>
     </div>
+  )
+}
+
+// Wrap in Suspense to satisfy Next.js 14 requirement for useSearchParams
+export default function WorkshopsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full" />
+      </div>
+    }>
+      <WorkshopsContent />
+    </Suspense>
   )
 }

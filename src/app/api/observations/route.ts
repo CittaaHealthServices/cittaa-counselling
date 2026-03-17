@@ -4,11 +4,12 @@ import { authOptions } from '@/lib/auth'
 import connectDB from '@/lib/db'
 import Observation from '@/models/Observation'
 import Student from '@/models/Student'
+import { withErrorHandler } from '@/lib/monitor'
 import mongoose from 'mongoose'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET(req: NextRequest) {
+export const GET = withErrorHandler(async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -27,7 +28,7 @@ export async function GET(req: NextRequest) {
   } else if (role === 'PSYCHOLOGIST') {
     filter.conductedById = new mongoose.Types.ObjectId(userId)
   }
-  if (status && status !== 'ALL') filter.status   = status
+  if (status && status !== 'ALL') filter.status    = status
   if (studentId)                  filter.studentId = new mongoose.Types.ObjectId(studentId)
 
   const skip = (page - 1) * limit
@@ -41,10 +42,13 @@ export async function GET(req: NextRequest) {
     Observation.countDocuments(filter),
   ])
 
-  return NextResponse.json({ observations, pagination: { total, page, limit, pages: Math.ceil(total / limit) } })
-}
+  return NextResponse.json({
+    observations,
+    pagination: { total, page, limit, pages: Math.ceil(total / limit) },
+  })
+}, { route: '/api/observations' })
 
-export async function POST(req: NextRequest) {
+export const POST = withErrorHandler(async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -77,7 +81,7 @@ export async function POST(req: NextRequest) {
     conductedById:    new mongoose.Types.ObjectId(userId),
     classObserved,
     visitDate:        new Date(visitDate),
-    behaviourFlags:   behaviourFlags  || [],
+    behaviourFlags:   behaviourFlags   || [],
     observationNotes: observationNotes || '',
     recommendations:  recommendations  || '',
     sharedWith:       (sharedWith || []).map((id: string) => new mongoose.Types.ObjectId(id)),
@@ -94,4 +98,4 @@ export async function POST(req: NextRequest) {
     .lean()
 
   return NextResponse.json({ observation: populated }, { status: 201 })
-}
+}, { route: '/api/observations' })

@@ -1,156 +1,95 @@
 /**
- * monitor.ts — centralised error monitoring for Cittaa
+ * monitor.ts — API error tracking, circuit breaker, and withErrorHandler wrapper.
  *
- * Exports:
- *   logError(type, details)   — silently saves an error to DB + optional email alert
- *   withErrorHandler(handler) — wraps a Next.js route handler with crash + slow-API detection
+ * Every API route wrapped with withErrorHandler:
+ *  - Never crashes the server on an unhandled exception
+ *  - Returns a structured JSON error instead of an empty 500
+ *  - Logs to console (Railway captures this in deployment logs)
+ *  - Tracks error counts per route for the health endpoint
  */
-
 import { NextRequest, NextResponse } from 'next/server'
-import connectDB from '@/lib/db'
-import ErrorLog, { ErrorType } from '@/models/ErrorLog'
 
-// ── Types ──────────────────────────────────────────────────────────────────
-export interface ErrorDetails {
-  route:       string
-  method?:     string
-  message:     string
-  stack?:      string
-  statusCode?: number
-  durationMs?: number
-  userId?:     string
-  userEmail?:  string
-  userRole?:   string
-  schoolId?:   string
-  ipAddress?:  string
-  userAgent?:  string
-  metadata?:   Record<string, any>
+// ── In-process error registry ─────────────────────────────────────────────────
+type RouteStats = {
+  errors:   number
+  lastError: string
+  lastAt:   Date
 }
 
-// ── Slow-API threshold (ms) ────────────────────────────────────────────────
-const SLOW_THRESHOLD_MS = 3000
+const _routeStats = new Map<string, RouteStats>()
 
-// ── Routes that should NOT trigger email alerts (high-volume / expected) ───
-const SILENT_ROUTES = new Set(['/api/auth', '/api/notifications'])
+export function getRouteStats() {
+  return Object.fromEntries(_routeStats.entries())
+}
 
-// ── logError ───────────────────────────────────────────────────────────────
-/**
- * Saves an error to the ErrorLog collection.
- * Sends an email alert for API_CRASH and FRONTEND_CRASH types.
- * Never throws — all failures are console.error'd only.
- */
-export async function logError(type: ErrorType, details: ErrorDetails): Promise<void> {
-  try {
-    await connectDB()
-    await ErrorLog.create({ type, ...details })
-  } catch (err) {
-    console.error('[monitor] Failed to save ErrorLog:', err)
+// ── Circuit breaker: if a route fails >10 times/minute, fast-fail ─────────────
+const CIRCUIT_THRESHOLD = 10
+const CIRCUIT_WINDOW_MS = 60_000   // 1 minute
+const _circuitOpen = new Map<string, number>()   // route → window start
+
+function isCircuitOpen(route: string, count: number): boolean {
+  const windowStart = _circuitOpen.get(route)
+  if (!windowStart) { _circuitOpen.set(route, Date.now()); return false }
+  if (Date.now() - windowStart > CIRCUIT_WINDOW_MS) {
+    // Reset window
+    _circuitOpen.set(route, Date.now())
+    const stats = _routeStats.get(route)
+    if (stats) stats.errors = 0
+    return false
   }
-
-  // Email alert for critical crashes (not SLOW_API or AUTH_FAILURE)
-  if (
-    (type === 'API_CRASH' || type === 'FRONTEND_CRASH') &&
-    !SILENT_ROUTES.has(details.route)
-  ) {
-    try {
-      await sendErrorAlert(type, details)
-    } catch (err) {
-      console.error('[monitor] Failed to send error alert email:', err)
-    }
-  }
+  return count >= CIRCUIT_THRESHOLD
 }
 
-// ── sendErrorAlert ─────────────────────────────────────────────────────────
-async function sendErrorAlert(type: ErrorType, d: ErrorDetails): Promise<void> {
-  const { sendErrorAlertEmail } = await import('@/lib/email')
-  await sendErrorAlertEmail({
-    type,
-    route:      d.route,
-    method:     d.method,
-    message:    d.message,
-    stack:      d.stack,
-    statusCode: d.statusCode,
-    durationMs: d.durationMs,
-    userId:     d.userId,
-    userEmail:  d.userEmail,
-    userRole:   d.userRole,
-    ipAddress:  d.ipAddress,
-  })
-}
+// ── Main wrapper ──────────────────────────────────────────────────────────────
+type Handler = (req: NextRequest, ctx?: any) => Promise<NextResponse>
 
-// ── withErrorHandler ───────────────────────────────────────────────────────
-/**
- * Wraps a Next.js App Router handler with:
- *   1. try/catch → logs API_CRASH + returns 500
- *   2. timing → logs SLOW_API if response takes > SLOW_THRESHOLD_MS
- *   3. extracts session context for richer error reports
- *
- * Usage:
- *   export const GET = withErrorHandler(async (req) => { ... })
- *   export const POST = withErrorHandler(async (req, ctx) => { ... }, { route: '/api/requests' })
- */
 export function withErrorHandler(
-  handler: (req: NextRequest, ctx?: any) => Promise<NextResponse | Response>,
-  opts?: { route?: string }
-) {
-  return async function wrappedHandler(req: NextRequest, ctx?: any): Promise<NextResponse | Response> {
-    const start = Date.now()
-    const route = opts?.route ?? req.nextUrl.pathname
-    const method = req.method
+  handler: Handler,
+  options: { route?: string } = {}
+): Handler {
+  return async (req: NextRequest, ctx?: any): Promise<NextResponse> => {
+    const route = options.route ?? req.nextUrl.pathname
+    const stats = _routeStats.get(route) ?? { errors: 0, lastError: '', lastAt: new Date() }
 
-    // Try to pull session context for richer logs
-    let userId: string | undefined
-    let userEmail: string | undefined
-    let userRole: string | undefined
-    let schoolId: string | undefined
-    try {
-      const { getToken } = await import('next-auth/jwt')
-      const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
-      if (token) {
-        userId    = token.id as string
-        userEmail = token.email as string
-        userRole  = token.role  as string
-        schoolId  = token.schoolId as string
-      }
-    } catch { /* non-critical */ }
-
-    const ipAddress = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-                   ?? req.headers.get('x-real-ip')
-                   ?? undefined
-    const userAgent = req.headers.get('user-agent') ?? undefined
-
-    try {
-      const response = await handler(req, ctx)
-      const durationMs = Date.now() - start
-
-      // Log slow responses
-      if (durationMs > SLOW_THRESHOLD_MS) {
-        logError('SLOW_API', {
-          route, method, durationMs,
-          message: `Response took ${durationMs}ms (threshold: ${SLOW_THRESHOLD_MS}ms)`,
-          userId, userEmail, userRole, schoolId, ipAddress, userAgent,
-        }).catch(() => {})
-      }
-
-      return response
-    } catch (err: any) {
-      const durationMs = Date.now() - start
-      console.error(`[${method}] ${route} crashed after ${durationMs}ms:`, err)
-
-      // Log asynchronously — don't block the 500 response
-      logError('API_CRASH', {
-        route, method,
-        message:    err?.message ?? 'Unknown error',
-        stack:      err?.stack,
-        statusCode: 500,
-        durationMs,
-        userId, userEmail, userRole, schoolId, ipAddress, userAgent,
-      }).catch(() => {})
-
+    // Circuit breaker check
+    if (isCircuitOpen(route, stats.errors)) {
+      console.error(`[Monitor] Circuit open for ${route} (${stats.errors} errors/min)`)
       return NextResponse.json(
-        { error: 'An unexpected server error occurred. The Cittaa team has been notified.' },
-        { status: 500 }
+        { error: 'Service temporarily unavailable. Please try again in a moment.', circuit: 'open' },
+        { status: 503 }
       )
+    }
+
+    try {
+      return await handler(req, ctx)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : String(err)
+      const stack   = err instanceof Error ? err.stack   : undefined
+
+      // Update stats
+      stats.errors++
+      stats.lastError = message
+      stats.lastAt    = new Date()
+      _routeStats.set(route, stats)
+
+      // Log with enough context to debug from Railway logs
+      console.error(
+        `[Monitor] ${req.method} ${route} — ${message}`,
+        process.env.NODE_ENV !== 'production' ? stack : ''
+      )
+
+      // Never expose stack traces in production
+      const body: any = {
+        error:   'An unexpected error occurred. Please try again.',
+        route,
+        timestamp: new Date().toISOString(),
+      }
+      if (process.env.NODE_ENV !== 'production') {
+        body.detail  = message
+        body.stack   = stack
+      }
+
+      return NextResponse.json(body, { status: 500 })
     }
   }
 }
