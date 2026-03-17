@@ -2,7 +2,7 @@
 import { Suspense, useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import {
   BookOpen, Calendar, CheckCircle2, XCircle, Clock,
   Plus, Filter, Search, ChevronRight, Users, Monitor,
@@ -45,7 +45,6 @@ const MODE_ICON: Record<string, JSX.Element> = {
 // Inner component uses useSearchParams — must be inside Suspense
 function WorkshopsContent() {
   const { data: session } = useSession()
-  const router = useRouter()
   const searchParams = useSearchParams()
 
   const [workshops, setWorkshops] = useState<any[]>([])

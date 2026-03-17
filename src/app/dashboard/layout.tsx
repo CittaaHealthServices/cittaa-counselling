@@ -5,7 +5,7 @@ import { Header }  from '@/components/layout/header'
 import { ErrorBoundary } from '@/components/error-boundary'
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [, setSidebarOpen] = useState(false)
 
   return (
     <div className="flex h-screen bg-slate-50 overflow-hidden">
