@@ -5,6 +5,7 @@ import connectDB from '@/lib/db'
 import Observation from '@/models/Observation'
 import CounselingRequest from '@/models/CounselingRequest'
 import Student from '@/models/Student'
+import { withErrorHandler } from '@/lib/monitor'
 import { sendObservationSharedEmail, sendObservationEscalatedEmail } from '@/lib/email-observations'
 import mongoose from 'mongoose'
 
@@ -18,7 +19,7 @@ const populate = (q: any) =>
    .populate('sharedWith',        'name email role')
    .populate('escalatedRequestId','requestNumber status')
 
-export async function GET(req: NextRequest, { params }: Ctx) {
+export const GET = withErrorHandler(async function GET(req: NextRequest, { params }: Ctx) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -31,16 +32,16 @@ export async function GET(req: NextRequest, { params }: Ctx) {
     if ((obs as any).schoolId?.toString() !== schoolId)
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   } else if (role === 'PSYCHOLOGIST') {
-    const isAuthor  = (obs as any).conductedById?._id?.toString() === userId
-    const isShared  = (obs as any).sharedWith?.some((u: any) => u._id?.toString() === userId)
+    const isAuthor = (obs as any).conductedById?._id?.toString() === userId
+    const isShared = (obs as any).sharedWith?.some((u: any) => u._id?.toString() === userId)
     if (!isAuthor && !isShared)
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
   return NextResponse.json({ observation: obs })
-}
+}, { route: '/api/observations/[id]' })
 
-export async function PATCH(req: NextRequest, { params }: Ctx) {
+export const PATCH = withErrorHandler(async function PATCH(req: NextRequest, { params }: Ctx) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -52,7 +53,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   const body = await req.json()
   const { action, ...fields } = body
 
-  // ── recommend: DRAFT → AWAITING_REVIEW ────────────────────────────────────
+  // ── recommend ────────────────────────────────────────────────────────────────
   if (action === 'recommend') {
     if (obs.status !== 'DRAFT')
       return NextResponse.json({ error: 'Only DRAFT observations can be recommended' }, { status: 400 })
@@ -63,14 +64,13 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     obs.recommendEscalation = true
     if (fields.observationNotes !== undefined) obs.observationNotes = fields.observationNotes
     if (fields.recommendations   !== undefined) obs.recommendations  = fields.recommendations
-    if (Array.isArray(fields.sharedWith)       && fields.sharedWith.length)
+    if (Array.isArray(fields.sharedWith) && fields.sharedWith.length)
       obs.sharedWith = fields.sharedWith.map((id: string) => new mongoose.Types.ObjectId(id))
     if (Array.isArray(fields.sharedWithEmails) && fields.sharedWithEmails.length)
       obs.sharedWithEmails = fields.sharedWithEmails
 
     await obs.save()
 
-    // Email all recipients
     const student = (obs as any).studentId
     const psych   = (obs as any).conductedById
     await Promise.allSettled(
@@ -93,7 +93,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     return NextResponse.json({ observation: await populate(Observation.findById(params.id)).lean() })
   }
 
-  // ── escalate: → ESCALATED + create CounselingRequest ──────────────────────
+  // ── escalate ─────────────────────────────────────────────────────────────────
   if (action === 'escalate') {
     if (!['AWAITING_REVIEW','DRAFT'].includes(obs.status))
       return NextResponse.json({ error: `Cannot escalate from ${obs.status}` }, { status: 400 })
@@ -101,9 +101,9 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     const student = (obs as any).studentId
     if (!student?._id) return NextResponse.json({ error: 'Student data missing' }, { status: 400 })
 
-    const count   = await CounselingRequest.countDocuments()
-    const reqNum  = `CR-${String(count + 1).padStart(4, '0')}`
-    const isHigh  = obs.behaviourFlags.some(f =>
+    const count  = await CounselingRequest.countDocuments()
+    const reqNum = `CR-${String(count + 1).padStart(4, '0')}`
+    const isHigh = obs.behaviourFlags.some((f: string) =>
       ['Suicidal ideation','Self-harm','Extreme aggression'].includes(f))
 
     const cr = await CounselingRequest.create({
@@ -142,7 +142,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     })
   }
 
-  // ── acknowledge ────────────────────────────────────────────────────────────
+  // ── acknowledge ───────────────────────────────────────────────────────────────
   if (action === 'acknowledge') {
     obs.status = 'ACKNOWLEDGED'
     if (fields.teacherResponse) obs.teacherResponse = fields.teacherResponse
@@ -150,7 +150,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     return NextResponse.json({ observation: await populate(Observation.findById(params.id)).lean() })
   }
 
-  // ── decline ────────────────────────────────────────────────────────────────
+  // ── decline ───────────────────────────────────────────────────────────────────
   if (action === 'decline') {
     obs.status        = 'DECLINED'
     obs.declineReason = fields.declineReason || ''
@@ -159,7 +159,7 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     return NextResponse.json({ observation: await populate(Observation.findById(params.id)).lean() })
   }
 
-  // ── general field edit (DRAFT only) ───────────────────────────────────────
+  // ── general edit (DRAFT only) ─────────────────────────────────────────────────
   if (obs.status !== 'DRAFT')
     return NextResponse.json({ error: 'Only DRAFT observations can be edited' }, { status: 400 })
   if (role === 'PSYCHOLOGIST' && (obs as any).conductedById?._id?.toString() !== userId)
@@ -170,14 +170,14 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   for (const key of EDITABLE) {
     if (fields[key] === undefined) continue
     if (key === 'visitDate') (obs as any)[key] = new Date(fields[key])
-    else if (key === 'sharedWith') (obs as any)[key] = (fields[key] as string[]).map(id => new mongoose.Types.ObjectId(id))
+    else if (key === 'sharedWith') (obs as any)[key] = (fields[key] as string[]).map((id: string) => new mongoose.Types.ObjectId(id))
     else (obs as any)[key] = fields[key]
   }
   await obs.save()
   return NextResponse.json({ observation: await populate(Observation.findById(params.id)).lean() })
-}
+}, { route: '/api/observations/[id]' })
 
-export async function DELETE(req: NextRequest, { params }: Ctx) {
+export const DELETE = withErrorHandler(async function DELETE(req: NextRequest, { params }: Ctx) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -189,8 +189,8 @@ export async function DELETE(req: NextRequest, { params }: Ctx) {
   const isOwner = obs.conductedById?.toString() === userId
   const isAdmin = ['CITTAA_ADMIN','CITTAA_SUPPORT'].includes(role)
   if (!isOwner && !isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-  if (obs.status === 'ESCALATED') return NextResponse.json({ error: 'Cannot delete an escalated observation' }, { status: 400 })
+  if (obs.status === 'ESCALATED') return NextResponse.json({ error: 'Cannot delete escalated observation' }, { status: 400 })
 
   await obs.deleteOne()
   return NextResponse.json({ success: true })
-}
+}, { route: '/api/observations/[id]' })
