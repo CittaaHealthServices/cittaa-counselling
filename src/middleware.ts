@@ -1,32 +1,35 @@
-import { withAuth } from 'next-auth/middleware'
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
-export default withAuth(
-  function middleware(req) {
-    // Only runs on /dashboard/* — login page is NOT in the matcher
-    // so no redirect loop is possible between middleware and /login
+/**
+ * Lightweight middleware — only checks that a session cookie EXISTS before
+ * allowing access to /dashboard routes.
+ *
+ * We intentionally do NOT verify the JWT here (no withAuth / no NEXTAUTH_SECRET
+ * needed on the Edge). Actual token validation happens inside each API route
+ * via getServerSession(). This avoids the Edge-JWT-verification loop that
+ * caused the login redirect to keep failing.
+ */
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl
+
+  if (!pathname.startsWith('/dashboard')) {
     return NextResponse.next()
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        // Protect every dashboard route — unauthenticated → NextAuth
-        // will redirect to /login?callbackUrl=... automatically
-        if (req.nextUrl.pathname.startsWith('/dashboard')) {
-          return !!token
-        }
-        return true
-      },
-    },
-    pages: { signIn: '/login' },
   }
-)
+
+  // Next-Auth sets one of these two cookie names depending on HTTPS
+  const hasSession =
+    req.cookies.has('next-auth.session-token') ||
+    req.cookies.has('__Secure-next-auth.session-token')
+
+  if (!hasSession) {
+    const loginUrl = new URL('/login', req.url)
+    loginUrl.searchParams.set('callbackUrl', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
+
+  return NextResponse.next()
+}
 
 export const config = {
-  // ONLY match dashboard routes — do NOT include /login
-  // If /login is in the matcher, withAuth can create a redirect loop:
-  //   middleware blocks /dashboard → redirects to /login
-  //   client session fires → redirects back to /dashboard
-  //   middleware blocks again → back to /login → infinite blink
   matcher: ['/dashboard/:path*'],
 }

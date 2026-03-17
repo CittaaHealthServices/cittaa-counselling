@@ -5,23 +5,18 @@ import User from '@/models/User'
 /**
  * POST /api/setup
  *
- * One-time bootstrap — creates the initial CITTAA_ADMIN.
- * Blocked after the first admin exists.
+ * Creates the initial CITTAA_ADMIN, or resets the admin password if one exists.
  *
- * Headers:
- *   x-setup-secret: <value of CRON_SECRET env var>
+ * Headers:  x-setup-secret: <CRON_SECRET env var>
+ * Body:     { "password": "NewPassword123", "force": true }
  *
- * Body:
- *   { "password": "YourChosenPassword" }
- *
- * Example (run once from Railway terminal or curl):
- *   curl -X POST https://cittaa-counselling-production.up.railway.app/api/setup \
+ * curl example:
+ *   curl -X POST https://app.cittaa.in/api/setup \
  *     -H "Content-Type: application/json" \
- *     -H "x-setup-secret: <CRON_SECRET>" \
- *     -d '{"password":"Cittaa@2025"}'
+ *     -H "x-setup-secret: YOUR_CRON_SECRET" \
+ *     -d '{"password":"Cittaa@2025","force":true}'
  */
 export async function POST(req: NextRequest) {
-  // ── Auth guard ─────────────────────────────────────────────────────────────
   const secret = req.headers.get('x-setup-secret')
   if (!secret || secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -29,18 +24,8 @@ export async function POST(req: NextRequest) {
 
   await connectDB()
 
-  // ── Block if admin already exists ─────────────────────────────────────────
-  const existingAdmin = await User.findOne({ role: 'CITTAA_ADMIN' })
-  if (existingAdmin) {
-    return NextResponse.json(
-      { error: 'Setup already complete. An admin user already exists.' },
-      { status: 409 }
-    )
-  }
-
-  // ── Validate body ─────────────────────────────────────────────────────────
   const body = await req.json().catch(() => ({}))
-  const { password } = body
+  const { password, force } = body
 
   if (!password || password.length < 8) {
     return NextResponse.json(
@@ -49,6 +34,25 @@ export async function POST(req: NextRequest) {
     )
   }
 
+  const existingAdmin = await User.findOne({ role: 'CITTAA_ADMIN' })
+
+  // ── Reset existing admin password ─────────────────────────────────────────
+  if (existingAdmin) {
+    if (!force) {
+      return NextResponse.json(
+        { error: 'Admin already exists. Send { "force": true } to reset password.' },
+        { status: 409 }
+      )
+    }
+    existingAdmin.passwordHash = password   // pre-save hook re-hashes
+    await existingAdmin.save()
+    return NextResponse.json({
+      message: 'Admin password reset successfully.',
+      email: existingAdmin.email,
+    })
+  }
+
+  // ── Create new admin ───────────────────────────────────────────────────────
   const adminEmail = process.env.ADMIN_EMAIL
   if (!adminEmail) {
     return NextResponse.json(
@@ -57,36 +61,33 @@ export async function POST(req: NextRequest) {
     )
   }
 
-  // ── Create admin ──────────────────────────────────────────────────────────
   const admin = await User.create({
     name:         'Sairam (Cittaa Admin)',
     email:        adminEmail.toLowerCase(),
-    passwordHash: password,           // pre-save hook hashes this
+    passwordHash: password,
     role:         'CITTAA_ADMIN',
     isActive:     true,
     isAvailable:  true,
   })
 
   return NextResponse.json(
-    {
-      message: 'Setup complete! Admin user created.',
-      email:   admin.email,
-      role:    admin.role,
-    },
+    { message: 'Setup complete! Admin user created.', email: admin.email },
     { status: 201 }
   )
 }
 
 /**
- * GET /api/setup — health check (tells you if setup is needed)
+ * GET /api/setup — check if setup is needed + show admin email
  */
 export async function GET() {
   await connectDB()
-  const adminExists = await User.exists({ role: 'CITTAA_ADMIN' })
+  const admin = await User.findOne({ role: 'CITTAA_ADMIN' }).select('email name').lean() as any
   return NextResponse.json({
-    setupRequired: !adminExists,
-    message: adminExists
-      ? 'System is configured. An admin already exists.'
-      : 'No admin found. POST to /api/setup with x-setup-secret header to create one.',
+    setupRequired: !admin,
+    adminEmail: admin?.email ?? null,
+    adminName:  admin?.name  ?? null,
+    message: admin
+      ? `Admin exists: ${admin.email}`
+      : 'No admin found. POST to /api/setup to create one.',
   })
 }
