@@ -5,54 +5,31 @@ import { Brain, Eye, EyeOff, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const { status } = useSession()
-  const [email, setEmail]     = useState('')
+  const [email, setEmail]       = useState('')
   const [password, setPassword] = useState('')
-  const [showPw, setShowPw]   = useState(false)
-  const [error, setError]     = useState('')
-  const [loading, setLoading] = useState(false)
+  const [showPw, setShowPw]     = useState(false)
+  const [error, setError]       = useState('')
+  const [loading, setLoading]   = useState(false)
+  const [redirecting, setRedirecting] = useState(false)
 
-  // Read callbackUrl from query string once (safe — no useSearchParams needed)
   const getCallbackUrl = () => {
     if (typeof window === 'undefined') return '/dashboard'
     const params = new URLSearchParams(window.location.search)
     const cb = params.get('callbackUrl') || '/dashboard'
-    // Safety: only allow relative paths, never external redirects
     return cb.startsWith('/') ? cb : '/dashboard'
   }
 
-  // If already authenticated, redirect immediately (handles back-button case)
+  // Redirect if already authenticated — but NEVER block the form
   useEffect(() => {
     if (status === 'authenticated') {
+      setRedirecting(true)
       window.location.replace(getCallbackUrl())
     }
   }, [status])
 
-  // While session is being checked, show a blank loading screen
-  // This prevents the flash — the form only appears once we KNOW the user is logged out
-  if (status === 'loading') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-900">
-        <Loader2 size={32} className="text-purple-300 animate-spin" />
-      </div>
-    )
-  }
-
-  // If authenticated (edge case: status flipped after initial check), show redirect spinner
-  if (status === 'authenticated') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-900">
-        <div className="flex flex-col items-center gap-3">
-          <Loader2 size={32} className="text-purple-300 animate-spin" />
-          <p className="text-purple-200 text-sm">Redirecting…</p>
-        </div>
-      </div>
-    )
-  }
-
-  // status === 'unauthenticated' — safe to show login form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (loading) return
+    if (loading || redirecting) return
     setLoading(true)
     setError('')
 
@@ -66,10 +43,10 @@ export default function LoginPage() {
       setError('Invalid email or password. Please try again.')
       setLoading(false)
     }
-    // On success: useSession status will flip to 'authenticated',
-    // the useEffect above fires, and we redirect to callbackUrl.
-    // No manual redirect needed here — avoids double-redirect race.
+    // On success: useSession flips to 'authenticated', useEffect fires redirect
   }
+
+  const isBusy = loading || redirecting
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-purple-950 via-purple-900 to-indigo-900 p-4">
@@ -84,6 +61,14 @@ export default function LoginPage() {
             <p className="text-purple-300 text-sm mt-0.5">MindBridge™ School Counselling Platform</p>
           </div>
 
+          {/* Subtle redirecting banner — doesn't block the form */}
+          {redirecting && (
+            <div className="flex items-center justify-center gap-2 mb-4 bg-purple-500/20 border border-purple-400/30 rounded-xl px-4 py-2.5">
+              <Loader2 size={14} className="text-purple-300 animate-spin" />
+              <span className="text-purple-200 text-sm">Redirecting to dashboard…</span>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="block text-purple-200 text-sm font-medium mb-1.5">
@@ -95,7 +80,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                disabled={loading}
+                disabled={isBusy}
                 placeholder="you@school.edu.in"
                 className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent disabled:opacity-50"
               />
@@ -112,7 +97,7 @@ export default function LoginPage() {
                   required
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  disabled={loading}
+                  disabled={isBusy}
                   placeholder="••••••••"
                   className="w-full bg-white/10 border border-white/20 rounded-xl px-4 py-3 pr-11 text-white placeholder-white/30 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent disabled:opacity-50"
                 />
@@ -134,11 +119,11 @@ export default function LoginPage() {
 
             <button
               type="submit"
-              disabled={loading}
+              disabled={isBusy}
               className="w-full bg-purple-500 hover:bg-purple-400 disabled:opacity-60 disabled:cursor-not-allowed text-white font-semibold py-3 rounded-xl transition flex items-center justify-center gap-2 text-sm mt-2"
             >
-              {loading && <Loader2 size={16} className="animate-spin" />}
-              {loading ? 'Signing in…' : 'Sign in'}
+              {isBusy && <Loader2 size={16} className="animate-spin" />}
+              {redirecting ? 'Redirecting…' : loading ? 'Signing in…' : 'Sign in'}
             </button>
           </form>
 
