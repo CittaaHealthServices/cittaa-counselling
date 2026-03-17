@@ -60,7 +60,7 @@ const TEMPLATE_TOPICS: { theme: string; title: string; targetGroup: string; prog
   { theme: 'Peer Program', title: "Peer Champions Board Season Buddy Deployment", targetGroup: "Grade 9–11", programType: "PEER_PROGRAM", mode: "OFFLINE", seriesType: "BI_WEEKLY", priority: "HIGH" },
 ]
 
-const THEMES = [...new Set(TEMPLATE_TOPICS.map(t => t.theme))].sort()
+const THEMES = Array.from(new Set(TEMPLATE_TOPICS.map(t => t.theme))).sort()
 
 export default function NewWorkshopPage() {
   const { data: session } = useSession()
