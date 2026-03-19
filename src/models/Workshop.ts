@@ -48,7 +48,7 @@ const WorkshopSchema = new Schema<IWorkshop>(
     week:              { type: String, default: '' },
     mode:              { type: String, enum: ['OFFLINE','ONLINE','HYBRID'], default: 'OFFLINE' },
     durationMinutes:   { type: Number, default: 45 },
-    seriesType:        { type: String, enum: ['ONE_TIME','SERIES','RECURRING'], default: 'ONE_TIME' },
+    seriesType:        { type: String, enum: ['ONE_TIME','SERIES','RECURRING','MONTHLY_SERIES','BI_WEEKLY','QUARTERLY'], default: 'ONE_TIME' },
     priority:          { type: String, enum: ['LOW','MEDIUM','HIGH'], default: 'MEDIUM' },
     status:            { type: String,
       enum: ['PLANNED','CONFIRMED','COMPLETED','CANCELLED','POSTPONED'], default: 'PLANNED' },
