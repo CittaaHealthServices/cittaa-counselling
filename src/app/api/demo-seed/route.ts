@@ -35,6 +35,7 @@ const DEMO_PASSWORD = 'Cittaa@Demo1'
 type DemoUser = {
   name: string
   email: string
+  username?: string
   password: string
   role: string
   schoolKey?: string   // links to demo school
@@ -64,6 +65,7 @@ const DEMO_USERS: DemoUser[] = [
   {
     name:        'Dr. Ananya Sharma',
     email:       'psychologist@cittaa.in',
+    username:    'psychologist',
     password:    DEMO_PASSWORD,
     role:        'PSYCHOLOGIST',
     schoolKey:   'demo',
@@ -74,6 +76,7 @@ const DEMO_USERS: DemoUser[] = [
   {
     name:        'Mr. Rajesh Kumar',
     email:       'principal@demoschool.in',
+    username:    'principal',
     password:    DEMO_PASSWORD,
     role:        'SCHOOL_PRINCIPAL',
     schoolKey:   'demo',
@@ -83,6 +86,7 @@ const DEMO_USERS: DemoUser[] = [
   {
     name:        'Ms. Sunita Reddy',
     email:       'schooladmin@demoschool.in',
+    username:    'schooladmin',
     password:    DEMO_PASSWORD,
     role:        'SCHOOL_ADMIN',
     schoolKey:   'demo',
@@ -92,6 +96,7 @@ const DEMO_USERS: DemoUser[] = [
   {
     name:        'Mr. Venkat Rao',
     email:       'coordinator@demoschool.in',
+    username:    'coordinator',
     password:    DEMO_PASSWORD,
     role:        'COORDINATOR',
     schoolKey:   'demo',
@@ -101,6 +106,7 @@ const DEMO_USERS: DemoUser[] = [
   {
     name:        'Ms. Lakshmi Devi',
     email:       'teacher@demoschool.in',
+    username:    'teacher',
     password:    DEMO_PASSWORD,
     role:        'CLASS_TEACHER',
     schoolKey:   'demo',
@@ -135,6 +141,7 @@ export async function POST(req: NextRequest) {
         existing.passwordHash = u.password     // pre-save hook re-hashes
         existing.isActive     = true
         existing.name         = u.name
+        if (u.username) existing.username = u.username
         if (u.schoolKey) existing.schoolId = schoolId
         await existing.save()
         results.push({ email: u.email, status: 'reset', role: u.role })
@@ -144,6 +151,7 @@ export async function POST(req: NextRequest) {
           email:        u.email.toLowerCase(),
           passwordHash: u.password,
           role:         u.role,
+          username:     u.username,
           schoolId:     u.schoolKey ? schoolId : undefined,
           isActive:     u.isActive,
           isAvailable:  u.isAvailable ?? false,
